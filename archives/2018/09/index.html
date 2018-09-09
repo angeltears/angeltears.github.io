@@ -6,20 +6,19 @@
   <meta name="renderer" content="webkit">
   <meta http-equiv="X-UA-Compatible" content="IE=edge" >
   <link rel="dns-prefetch" href="https://justsolitude.com">
-  <title>muduo源码学习笔记(1) | Solitude</title>
+  <title>Archives: 2018/9 | Solitude</title>
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
-  <meta name="description" content="前言： ​    对于muduo库，我觉得，光Linux多线程上提到的一些实现，还是不够的，在base/里面，还有/net里面提供了很多不错的实现，值得去学习，暑假算是看看muduo的百分之八十的源码，并对其进行了一次实现，（剩下的在最近总结的时候，也会开始看看，并实现一遍），对于muduo库，简单谈谈自己对其实现的理解。 #####用RAII管理你的锁 ​    Posix Thread内定义的">
-<meta name="keywords" content="多线程,muduo">
-<meta property="og:type" content="article">
-<meta property="og:title" content="muduo源码学习笔记(1)">
-<meta property="og:url" content="https://justsolitude.com/2018/07/20/muduo源码学习笔记-1/index.html">
+  <meta name="description" content="西邮16级学生，爱好游戏，致力于研究服务端开发各种技术，能力有限，此为博客一枚">
+<meta name="keywords" content="后端,c++,linuxer,多线程,高并发,开发者,程序猿,,极客,编程,代码,开源,IT网站,Developer,Programmer,Coder">
+<meta property="og:type" content="website">
+<meta property="og:title" content="Solitude">
+<meta property="og:url" content="https://justsolitude.com/archives/2018/09/index.html">
 <meta property="og:site_name" content="Solitude">
-<meta property="og:description" content="前言： ​    对于muduo库，我觉得，光Linux多线程上提到的一些实现，还是不够的，在base/里面，还有/net里面提供了很多不错的实现，值得去学习，暑假算是看看muduo的百分之八十的源码，并对其进行了一次实现，（剩下的在最近总结的时候，也会开始看看，并实现一遍），对于muduo库，简单谈谈自己对其实现的理解。 #####用RAII管理你的锁 ​    Posix Thread内定义的">
+<meta property="og:description" content="西邮16级学生，爱好游戏，致力于研究服务端开发各种技术，能力有限，此为博客一枚">
 <meta property="og:locale" content="default">
-<meta property="og:updated_time" content="2018-09-09T06:04:27.458Z">
 <meta name="twitter:card" content="summary">
-<meta name="twitter:title" content="muduo源码学习笔记(1)">
-<meta name="twitter:description" content="前言： ​    对于muduo库，我觉得，光Linux多线程上提到的一些实现，还是不够的，在base/里面，还有/net里面提供了很多不错的实现，值得去学习，暑假算是看看muduo的百分之八十的源码，并对其进行了一次实现，（剩下的在最近总结的时候，也会开始看看，并实现一遍），对于muduo库，简单谈谈自己对其实现的理解。 #####用RAII管理你的锁 ​    Posix Thread内定义的">
+<meta name="twitter:title" content="Solitude">
+<meta name="twitter:description" content="西邮16级学生，爱好游戏，致力于研究服务端开发各种技术，能力有限，此为博客一枚">
   
     <link rel="alternative" href="/atom.xml" title="Solitude" type="application/atom+xml">
   
@@ -143,100 +142,36 @@
             <canvas data-colors="#eaeaea" data-sectionHeight="100" data-contentId="js-content" id="myCanvas1" class="anm-canvas"></canvas>
           </div>
           <div id="js-content" class="content-ll">
-            <article id="post-muduo源码学习笔记-1" class="article article-type-post " itemscope itemprop="blogPost">
-  <div class="article-inner">
-    
-      <header class="article-header">
-        
+            
   
-    <h1 class="article-title" itemprop="name">
-      muduo源码学习笔记(1)
+  
+    
+    
+      
+      
+      <section class="archives-wrap">
+        <div class="archive-year-wrap">
+          <a href="/archives/2018" class="archive-year">2018</a>
+        </div>
+        <div class="archives">
+    
+    <article class="archive-article archive-type-post">
+  <div class="archive-article-inner">
+    <header class="archive-article-header">
+      	<div class="article-meta">
+	      	<a href="/2018/09/02/muduo源码学习笔记-1/" class="archive-article-date">
+  	<time datetime="2018-09-02T10:36:00.000Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2018-09-02</time>
+</a>
+        </div>
+    	 
+  
+    <h1 itemprop="name">
+      <a class="archive-article-title" href="/2018/09/02/muduo源码学习笔记-1/">muduo源码学习笔记(1)</a>
     </h1>
   
 
-        
-        <a href="/2018/07/20/muduo源码学习笔记-1/" class="archive-article-date">
-  	<time datetime="2018-07-20T10:36:00.000Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2018-07-20</time>
-</a>
-        
-      </header>
-    
-    <div class="article-entry" itemprop="articleBody">
-      
-        <p>前言：</p>
-<p>​    对于muduo库，我觉得，光Linux多线程上提到的一些实现，还是不够的，在base/里面，还有/net里面提供了很多不错的实现，值得去学习，暑假算是看看muduo的百分之八十的源码，并对其进行了一次实现，（剩下的在最近总结的时候，也会开始看看，并实现一遍），对于muduo库，简单谈谈自己对其实现的理解。</p>
-<p>#####用RAII管理你的锁</p>
-<p>​    Posix Thread内定义的一系列的mutex函数，但是是基于C语言的，用起来很不方便，需要不断地初始化，销毁p，我们要对其进行一定程度的封装，使得我们不必重复的写初始话，销毁操作，专注在使用上。</p>
-<p>​    muduo对锁进行了封装，分别是Mutex、MutexGruad、Condition、CountDownLatch。</p>
-<p>#####Mutex的实现</p>
-<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br></pre></td><td class="code"><pre><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">MutexLock</span> :</span> boost::noncopyable</span><br><span class="line">  &#123;</span><br><span class="line">  <span class="keyword">public</span>:</span><br><span class="line">      MutexLock():holder_(<span class="number">0</span>)</span><br><span class="line">      &#123;</span><br><span class="line">          MCHECK(pthread_mutex_init(&amp;mutex_, <span class="literal">NULL</span>));</span><br><span class="line">      &#125;</span><br><span class="line">      ~MutexLock()</span><br><span class="line">      &#123;</span><br><span class="line">          assert(holder_ == <span class="number">0</span>);</span><br><span class="line">          MCHECK(pthread_mutex_destroy(&amp;mutex_));</span><br><span class="line">      &#125;</span><br><span class="line">      <span class="function"><span class="keyword">bool</span> <span class="title">isLocketByThisThread</span><span class="params">()</span> <span class="keyword">const</span></span></span><br><span class="line"><span class="function">      </span>&#123;</span><br><span class="line">          <span class="keyword">return</span> holder_ == CurrentThread::tid();</span><br><span class="line">      &#125;</span><br><span class="line">      <span class="function"><span class="keyword">void</span> <span class="title">assertLocked</span><span class="params">()</span> <span class="keyword">const</span></span></span><br><span class="line"><span class="function">      </span>&#123;</span><br><span class="line">          assert(isLocketByThisThread());</span><br><span class="line">      &#125;</span><br><span class="line">      <span class="function"><span class="keyword">void</span> <span class="title">lock</span><span class="params">()</span></span></span><br><span class="line"><span class="function">      </span>&#123;</span><br><span class="line">          MCHECK(pthread_mutex_lock(&amp;mutex_));</span><br><span class="line">          assignHolder();</span><br><span class="line">      &#125;</span><br><span class="line">      <span class="function"><span class="keyword">void</span> <span class="title">unlock</span><span class="params">()</span></span></span><br><span class="line"><span class="function">      </span>&#123;</span><br><span class="line">          unassignHolder();</span><br><span class="line">          MCHECK(pthread_mutex_unlock(&amp;mutex_));</span><br><span class="line">      &#125;</span><br><span class="line">      <span class="keyword">pthread_mutex_t</span>* getPthreadMutex() <span class="comment">/* non-const */</span>　　　</span><br><span class="line">      &#123;</span><br><span class="line">          <span class="keyword">return</span> &amp;mutex_;</span><br><span class="line">      &#125;</span><br><span class="line">      <span class="keyword">private</span>:</span><br><span class="line">      <span class="function"><span class="keyword">void</span> <span class="title">unassignHolder</span><span class="params">()</span></span></span><br><span class="line"><span class="function">      </span>&#123;</span><br><span class="line">          holder_ = <span class="number">0</span>;</span><br><span class="line">      &#125;</span><br><span class="line">      <span class="function"><span class="keyword">void</span> <span class="title">assignHolder</span><span class="params">()</span></span></span><br><span class="line"><span class="function">      </span>&#123;</span><br><span class="line">          holder_ = CurrentThread::tid();</span><br><span class="line">      &#125;</span><br><span class="line">  <span class="keyword">private</span>:</span><br><span class="line">      <span class="keyword">pthread_mutex_t</span>  mutex_;</span><br><span class="line">      <span class="keyword">pid_t</span> holder_;       <span class="comment">// 如果不是同一个线程的加锁和解锁则会失败</span></span><br><span class="line">  &#125;;</span><br></pre></td></tr></table></figure>
-<p>如果单单只是这样实现mutex，还是太过于麻烦，而且这个锁，我们只能在函数内自动获取自动产生，然后自动析构，会有一定的性能损失。</p>
-<p>下面实现了MutexLockGurad用于自动获取锁，加锁和解锁。</p>
-<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">MutexLockGuard</span> :</span> boost::noncopyable</span><br><span class="line">&#123;</span><br><span class="line"><span class="keyword">public</span>:</span><br><span class="line">    explicit MutexLockGuard(MutexLock&amp; mutex):mutex_(mutex)</span><br><span class="line">    &#123;</span><br><span class="line">        mutex_.lock();</span><br><span class="line">    &#125;</span><br><span class="line">    ~MutexLockGuard()</span><br><span class="line">    &#123;</span><br><span class="line">        mutex_.unlock();</span><br><span class="line">    &#125;</span><br><span class="line"><span class="keyword">private</span>:</span><br><span class="line">    MutexLock&amp; mutex_;</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
-<p>还有需要注意的就是，在实现的时候，定义了两个宏</p>
-<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// 用宏的方式检查返回值是否为0，</span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">ifdef</span> CHECK_PTHREAD_RETURN_VALUE</span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">ifdef</span> NDEBUG</span></span><br><span class="line">__BEGIN_DECLS</span><br><span class="line"><span class="keyword">extern</span> <span class="keyword">void</span> __assert_perror_fail (<span class="keyword">int</span> errnum,</span><br><span class="line">                                  <span class="keyword">const</span> <span class="keyword">char</span> *file,</span><br><span class="line">                                  <span class="keyword">unsigned</span> <span class="keyword">int</span> line,</span><br><span class="line">                                  <span class="keyword">const</span> <span class="keyword">char</span> *function)</span><br><span class="line">    __THROW __attribute__ ((__noreturn__));</span><br><span class="line">__END_DECLS</span><br><span class="line"><span class="meta">#<span class="meta-keyword">endif</span></span></span><br><span class="line"></span><br><span class="line"><span class="meta">#<span class="meta-keyword">define</span> MCHECK(ret) (&#123; __typeof__ (ret) errnum = (ret);         \</span></span><br><span class="line">                       <span class="keyword">if</span> (__builtin_expect(errnum != <span class="number">0</span>, <span class="number">0</span>))    \</span><br><span class="line">                         __assert_perror_fail (errnum, __FILE__, __LINE__, __func__);&#125;)</span><br><span class="line"></span><br><span class="line"><span class="meta">#<span class="meta-keyword">else</span>  <span class="comment">// CHECK_PTHREAD_RETURN_VALUE</span></span></span><br><span class="line"><span class="comment">// 定义一个ret类型的errnum，然后判断errnum是否＝＝０，</span></span><br><span class="line"><span class="comment">// (void)(value)作用仅仅就是以显眼的方式让编译器不要给出参数未被使用的警告</span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">define</span> MCHECK(ret) (&#123; __typeof__ (ret) errnum = (ret);         \　　　</span></span><br><span class="line">                       assert(errnum == <span class="number">0</span>); (<span class="keyword">void</span>) errnum;&#125;)</span><br><span class="line"></span><br><span class="line"><span class="meta">#<span class="meta-keyword">endif</span> <span class="comment">// CHECK_PTHREAD_RETURN_VALUE</span></span></span><br><span class="line"><span class="comment">// 防止错误的用法</span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">define</span> MutexLockGuard(x) <span class="meta-keyword">error</span> <span class="meta-string">"Missing guard object name"</span></span></span><br></pre></td></tr></table></figure>
-<p>没有注释的代码，里面有些小问题，我们可以总结一下</p>
-<p><em>__builtin_expect</em></p>
-<p>​    提供给程序员使用的，目的是将“分支转移”的信息提供给编译器，这样编译器可以对代码进行优化，以减少指令跳转带来的性能下降。</p>
-<p>​    函数声明如下</p>
-<p>​    long __builtin_expect(long exp, long c);</p>
-<p>　　　　<em>exp</em> 为一个整型表达式, 例如: (ptr != NULL)</p>
-<p>　　　　 <em>c</em> 必须是一个编译期常量, 不能使用变量    </p>
-<p>　　　　返回值等于 第一个参数 <em>exp</em></p>
-<p>​    这个函数的语义是：你期望exp表达式的值等于常量c，从而GCC为你优化程序，将符合这个条件的分支放在合适的地方。</p>
-<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">__assert_perror_fail (errnum, __FILE__, __LINE__, __func__)</span><br></pre></td></tr></table></figure>
-<p>​    最后会按照<strong>FILE</strong> ：<strong>LINE　：</strong> <strong>func</strong>　: <strong>errnum</strong>打印出错误，和assert一样，都在编译时候执行，但是好处在于它能按照格式打印出错误在哪里，便于快速排查出错误。</p>
-<p>#####Condition的实现</p>
-<p>​    如果直接使用我们上面实现的Mutex，会出现死锁。</p>
-<p>​    因为在我们使用Conditon的wait的时候：</p>
-<ul>
-<li><p>释放Mutex</p>
-</li>
-<li><p>阻塞等待</p>
-<p>​    当其它线程调用pthread_cond_signal或pthread_cond_signal,它会重写获取锁。</p>
-<p>​    这个时候，pthread_cond_wait势必会改变pthread_mutex_t和MutexLock:holder_的一致性。所以需要在调用<em>pthread_cond_wait</em>的前后添加一些代码去相应的修改<em>MutexLock::holder_</em>，也就是分别调用<em>MutexLock::unassignHolder</em>和<em>MutexLock::assignHolder</em>。<em>MutexLock::UnassignGuard</em>类的作用，就是利用RAII简化对<em>MutexLock::unassignHolder</em>和<em>MutexLock::assignHolder的调用。</em></p>
-<p> 所以在Ｍutex中我们需要加入unassignGuard类</p>
-<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br></pre></td><td class="code"><pre><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">Mutex</span></span></span><br><span class="line"><span class="class">&#123;</span></span><br><span class="line">    ...</span><br><span class="line"><span class="keyword">private</span>:</span><br><span class="line">  <span class="keyword">friend</span> <span class="class"><span class="keyword">class</span> <span class="title">Condition</span>;</span></span><br><span class="line"></span><br><span class="line">  <span class="class"><span class="keyword">class</span> <span class="title">UnassignGuard</span> :</span> boost::noncopyable</span><br><span class="line">  &#123;</span><br><span class="line">   <span class="keyword">public</span>:</span><br><span class="line">    UnassignGuard(MutexLock&amp; owner)</span><br><span class="line">      : owner_(owner)</span><br><span class="line">    &#123;</span><br><span class="line">      owner_.unassignHolder();</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    ~UnassignGuard()</span><br><span class="line">    &#123;</span><br><span class="line">      owner_.assignHolder();</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">   <span class="keyword">private</span>:</span><br><span class="line">    MutexLock&amp; owner_;</span><br><span class="line">  &#125;;</span><br><span class="line">    ...</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
-<p> 这样我们就可以实现Conditon了</p>
-<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br></pre></td><td class="code"><pre><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">Condition</span> :</span> boost::noncopyable</span><br><span class="line">&#123;</span><br><span class="line"> <span class="keyword">public</span>:</span><br><span class="line">  <span class="function"><span class="keyword">explicit</span> <span class="title">Condition</span><span class="params">(MutexLock&amp; mutex)</span></span></span><br><span class="line">    : mutex_(mutex)</span><br><span class="line">  &#123;</span><br><span class="line">    MCHECK(pthread_cond_init(&amp;pcond_, <span class="literal">NULL</span>));</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  ~Condition()</span><br><span class="line">  &#123;</span><br><span class="line">    MCHECK(pthread_cond_destroy(&amp;pcond_));</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  <span class="function"><span class="keyword">void</span> <span class="title">wait</span><span class="params">()</span></span></span><br><span class="line"><span class="function">  </span>&#123;</span><br><span class="line">    MutexLock::<span class="function">UnassignGuard <span class="title">ug</span><span class="params">(mutex_)</span></span>;   <span class="comment">//先将holder_清零，防止出现死锁</span></span><br><span class="line">    MCHECK(pthread_cond_wait(&amp;pcond_, mutex_.getPthreadMutex()));</span><br><span class="line">    <span class="comment">//　析构的时候，会将holder_恢复</span></span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  <span class="comment">// returns true if time out, false otherwise.</span></span><br><span class="line">  <span class="function"><span class="keyword">bool</span> <span class="title">waitForSeconds</span><span class="params">(<span class="keyword">double</span> seconds)</span></span>;</span><br><span class="line"></span><br><span class="line">  <span class="function"><span class="keyword">void</span> <span class="title">notify</span><span class="params">()</span></span></span><br><span class="line"><span class="function">  </span>&#123;</span><br><span class="line">    MCHECK(pthread_cond_signal(&amp;pcond_));</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  <span class="function"><span class="keyword">void</span> <span class="title">notifyAll</span><span class="params">()</span></span></span><br><span class="line"><span class="function">  </span>&#123;</span><br><span class="line">    MCHECK(pthread_cond_broadcast(&amp;pcond_));</span><br><span class="line">  &#125;</span><br><span class="line">  <span class="function"><span class="keyword">void</span> <span class="title">waitForSeconds</span><span class="params">(<span class="keyword">double</span> seconds)</span></span></span><br><span class="line"><span class="function">  </span>&#123;</span><br><span class="line">  	<span class="class"><span class="keyword">struct</span> <span class="title">timespec</span> <span class="title">abstime</span>;</span></span><br><span class="line">  	<span class="comment">// <span class="doctag">FIXME:</span> use CLOCK_MONOTONIC or CLOCK_MONOTONIC_RAW to prevent time rewind.</span></span><br><span class="line">  	clock_gettime(CLOCK_REALTIME, &amp;abstime);</span><br><span class="line"></span><br><span class="line">  	<span class="keyword">const</span> <span class="keyword">int64_t</span> kNanoSecondsPerSecond = <span class="number">1000000000</span>;</span><br><span class="line">  	<span class="keyword">int64_t</span> nanoseconds = <span class="keyword">static_cast</span>&lt;<span class="keyword">int64_t</span>&gt;(seconds * kNanoSecondsPerSecond);</span><br><span class="line"></span><br><span class="line">  	abstime.tv_sec += <span class="keyword">static_cast</span>&lt;<span class="keyword">time_t</span>&gt;((abstime.tv_nsec + nanoseconds) / 			kNanoSecondsPerSecond);</span><br><span class="line">  	abstime.tv_nsec = <span class="keyword">static_cast</span>&lt;<span class="keyword">long</span>&gt;((abstime.tv_nsec + nanoseconds) % 			     kNanoSecondsPerSecond);</span><br><span class="line"></span><br><span class="line">    MutexLock::<span class="function">UnassignGuard <span class="title">ug</span><span class="params">(mutex_)</span></span>;</span><br><span class="line">    <span class="keyword">return</span> ETIMEDOUT == pthread_cond_timedwait(&amp;pcond_, mutex_.getPthreadMutex(), 		&amp;abstime);</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line"> <span class="keyword">private</span>:</span><br><span class="line">  MutexLock&amp; mutex_;</span><br><span class="line">  <span class="keyword">pthread_cond_t</span> pcond_;</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
-<h5 id="CountDownLatch的实现"><a href="#CountDownLatch的实现" class="headerlink" title="CountDownLatch的实现"></a>CountDownLatch的实现</h5><p>我们有时对Condition类上面再套一层封装来使用，他就是我们的CountDownLatch类。通过倒计时计数器的方式，设置计数。倒计时未完，CountDownLatch的内部一直处于</p>
-<p>Condition类的wait()状态。倒计时完毕，唤醒cond，程序正常执行。所以我们可以给某件即将发生的事设置一个条件，比如至少5个满足才会触发该事件，那么计数值设为5，</p>
-<p>等到倒计时为0时，CountDownLatch类就可以让你顺利的去执行该事件了。</p>
-<p>所以它主要有两个用法：</p>
-<p>​    1.既可以用于所有子线程主动等待主线程发起“起跑”</p>
-<p>​    2.也可以用于主线哼等待子线程初始化完毕才开始工作</p>
-<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br></pre></td><td class="code"><pre><span class="line"></span><br><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">CountDownLatch</span> :</span> boost::noncopyable</span><br><span class="line">&#123;</span><br><span class="line"> <span class="keyword">public</span>:</span><br><span class="line"></span><br><span class="line">  <span class="function"><span class="keyword">explicit</span> <span class="title">CountDownLatch</span><span class="params">(<span class="keyword">int</span> count)</span></span></span><br><span class="line">  : mutex_(),</span><br><span class="line">    condition_(mutex_),</span><br><span class="line">    count_(count)</span><br><span class="line">  &#123;</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  <span class="function"><span class="keyword">void</span> <span class="title">wait</span><span class="params">()</span></span></span><br><span class="line"><span class="function">  </span>&#123;</span><br><span class="line">    <span class="function">MutexLockGuard <span class="title">lock</span><span class="params">(mutex_)</span></span>;</span><br><span class="line">  	<span class="keyword">while</span> (count_ &gt; <span class="number">0</span>)</span><br><span class="line">  	&#123;</span><br><span class="line">    	condition_.wait();</span><br><span class="line">  	&#125;</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  <span class="function"><span class="keyword">void</span> <span class="title">countDown</span><span class="params">()</span></span></span><br><span class="line"><span class="function">  </span>&#123;</span><br><span class="line">    <span class="function">MutexLockGuard <span class="title">lock</span><span class="params">(mutex_)</span></span>;</span><br><span class="line">  	--count_;</span><br><span class="line">  	<span class="keyword">if</span> (count_ == <span class="number">0</span>)</span><br><span class="line">  	&#123;</span><br><span class="line">    	condition_.notifyAll();</span><br><span class="line">  	&#125;</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  <span class="function"><span class="keyword">int</span> <span class="title">getCount</span><span class="params">()</span> <span class="keyword">const</span></span></span><br><span class="line"><span class="function">  </span>&#123;</span><br><span class="line">  	  <span class="function">MutexLockGuard <span class="title">lock</span><span class="params">(mutex_)</span></span>;</span><br><span class="line">  	  <span class="keyword">return</span> count_;</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line"> <span class="keyword">private</span>:</span><br><span class="line">  <span class="keyword">mutable</span> MutexLock mutex_;</span><br><span class="line">  Condition condition_;</span><br><span class="line">  <span class="keyword">int</span> count_;</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
-</li>
-</ul>
-
-      
-
-      
-        <div class="page-reward">
-          <a href="javascript:;" class="page-reward-btn tooltip-top">
-            <div class="tooltip tooltip-east">
-            <span class="tooltip-item">
-              赏
-            </span>
-            <span class="tooltip-content">
-              <span class="tooltip-text">
-                <span class="tooltip-inner">
-                  <p class="reward-p"><i class="icon icon-quo-left"></i>谢谢你请我吃糖果<i class="icon icon-quo-right"></i></p>
-                  <div class="reward-box">
-                    
-                    
-                  </div>
-                </span>
-              </span>
-            </span>
-          </div>
-          </a>
-        </div>
-      
-    </div>
-    <div class="article-info article-info-index">
-      
-      
+        <div class="article-info info-on-right">
+          
 	<div class="article-tag tagcloud">
 		<i class="icon-price-tags icon"></i>
 		<ul class="article-tag-list">
@@ -252,138 +187,19 @@
 		</ul>
 	</div>
 
-      
+          
 
-      
-
-      
-        
-<div class="share-btn share-icons tooltip-left">
-  <div class="tooltip tooltip-east">
-    <span class="tooltip-item">
-      <a href="javascript:;" class="share-sns share-outer">
-        <i class="icon icon-share"></i>
-      </a>
-    </span>
-    <span class="tooltip-content">
-      <div class="share-wrap">
-        <div class="share-icons">
-          <a class="weibo share-sns" href="javascript:;" data-type="weibo">
-            <i class="icon icon-weibo"></i>
-          </a>
-          <a class="weixin share-sns wxFab" href="javascript:;" data-type="weixin">
-            <i class="icon icon-weixin"></i>
-          </a>
-          <a class="qq share-sns" href="javascript:;" data-type="qq">
-            <i class="icon icon-qq"></i>
-          </a>
-          <a class="douban share-sns" href="javascript:;" data-type="douban">
-            <i class="icon icon-douban"></i>
-          </a>
-          <a class="qzone share-sns" href="javascript:;" data-type="qzone">
-            <i class="icon icon-qzone"></i>
-          </a>
-          <a class="facebook share-sns" href="javascript:;" data-type="facebook">
-            <i class="icon icon-facebook"></i>
-          </a>
-          <a class="twitter share-sns" href="javascript:;" data-type="twitter">
-            <i class="icon icon-twitter"></i>
-          </a>
-          <a class="google share-sns" href="javascript:;" data-type="google">
-            <i class="icon icon-google"></i>
-          </a>
         </div>
-      </div>
-    </span>
-  </div>
-</div>
-
-<div class="page-modal wx-share js-wx-box">
-    <a class="close js-modal-close" href="javascript:;"><i class="icon icon-close"></i></a>
-    <p>扫一扫，分享到微信</p>
-    <div class="wx-qrcode">
-      <img src="//pan.baidu.com/share/qrcode?url=https://justsolitude.com/2018/07/20/muduo源码学习笔记-1/" alt="微信分享二维码">
-    </div>
-</div>
-
-<div class="mask js-mask"></div>
-      
-      <div class="clearfix"></div>
-    </div>
+        <div class="clearfix"></div>
+    </header>
   </div>
 </article>
-
-  
-<nav id="article-nav">
-  
-    <a href="/2018/07/20/浅析线程安全的对象生命期的管理/" id="article-nav-newer" class="article-nav-link-wrap">
-      <i class="icon-circle-left"></i>
-      <div class="article-nav-title">
-        
-          浅析线程安全的对象生命期的管理
-        
-      </div>
-    </a>
   
   
-    <a href="/2018/07/18/ftp关键技术五:限制链接数/" id="article-nav-older" class="article-nav-link-wrap">
-      <div class="article-nav-title">ftp关键技术五:限制链接数</div>
-      <i class="icon-circle-right"></i>
-    </a>
-  
-</nav>
-
-
-<aside class="wrap-side-operation">
-    <div class="mod-side-operation">
-        
-        <div class="jump-container" id="js-jump-container" style="display:none;">
-            <a href="javascript:void(0)" class="mod-side-operation__jump-to-top">
-                <i class="icon-font icon-back"></i>
-            </a>
-            <div id="js-jump-plan-container" class="jump-plan-container" style="top: -11px;">
-                <i class="icon-font icon-plane jump-plane"></i>
-            </div>
-        </div>
-        
-        
-        <div class="toc-container tooltip-left">
-            <i class="icon-font icon-category"></i>
-            <div class="tooltip tooltip-east">
-                <span class="tooltip-item">
-                </span>
-                <span class="tooltip-content">
-                    <div class="toc-article">
-                    <ol class="toc"><li class="toc-item toc-level-5"><a class="toc-link" href="#CountDownLatch的实现"><span class="toc-number">1.</span> <span class="toc-text">CountDownLatch的实现</span></a></li></ol>
-                    </div>
-                </span>
-            </div>
-        </div>
-        
-    </div>
-</aside>
-
-
-
-  
-  
+    </div></section>
   
 
-  
-  <div id="SOHUCS" sid="muduo源码学习笔记-1" ></div> 
-<script charset="utf-8" type="text/javascript" src="//changyan.sohu.com/upload/changyan.js" ></script>
-<script type="text/javascript">
-    window.changyan.api.config({
-        appid: "cytJs2M3p",
-        conf: "e1329fd3d49367d0715ddbdb345964a6"
-    });
-</script>
-</script>
-  
-
-  
-
-  
+    
 
 
           </div>
@@ -406,8 +222,8 @@
 	var yiliaConfig = {
 		mathjax: false,
 		isHome: false,
-		isPost: true,
-		isArchive: false,
+		isPost: false,
+		isArchive: true,
 		isTag: false,
 		isCategory: false,
 		open_in_new: false,
