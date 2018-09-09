@@ -6,20 +6,19 @@
   <meta name="renderer" content="webkit">
   <meta http-equiv="X-UA-Compatible" content="IE=edge" >
   <link rel="dns-prefetch" href="https://justsolitude.com">
-  <title>ftp关键技术四：空闲断开 | Solitude</title>
+  <title>Tag: muduo | Solitude</title>
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
-  <meta name="description" content="首先提出一个问题，我们为什么需要空闲断开？ ​    对于服务端而言，由于连接数和内存的限制，我们不可能对一个长时间处于不活跃的客户端，单独维护一个fd，一个进程/线程始终为其服务，fd单个进程上限默认值为1024，由于内存的限制，也不能无限制的分配出进程或者线程为其服务，这个时候我们就需要断开在规定时间内没有任何动作的客户端，腾出内存为其他客户端服务。 第二个问题，我们要基于什么实现空闲断开呢">
-<meta name="keywords" content="FTP">
-<meta property="og:type" content="article">
-<meta property="og:title" content="ftp关键技术四：空闲断开">
-<meta property="og:url" content="https://justsolitude.com/2018/06/13/ftp关键技术四：空闲断开/index.html">
+  <meta name="description" content="西邮16级学生，爱好游戏，致力于研究服务端开发各种技术，能力有限，此为博客一枚">
+<meta name="keywords" content="后端,c++,linuxer,多线程,高并发,开发者,程序猿,,极客,编程,代码,开源,IT网站,Developer,Programmer,Coder">
+<meta property="og:type" content="website">
+<meta property="og:title" content="Solitude">
+<meta property="og:url" content="https://justsolitude.com/tags/muduo/index.html">
 <meta property="og:site_name" content="Solitude">
-<meta property="og:description" content="首先提出一个问题，我们为什么需要空闲断开？ ​    对于服务端而言，由于连接数和内存的限制，我们不可能对一个长时间处于不活跃的客户端，单独维护一个fd，一个进程/线程始终为其服务，fd单个进程上限默认值为1024，由于内存的限制，也不能无限制的分配出进程或者线程为其服务，这个时候我们就需要断开在规定时间内没有任何动作的客户端，腾出内存为其他客户端服务。 第二个问题，我们要基于什么实现空闲断开呢">
+<meta property="og:description" content="西邮16级学生，爱好游戏，致力于研究服务端开发各种技术，能力有限，此为博客一枚">
 <meta property="og:locale" content="default">
-<meta property="og:updated_time" content="2018-07-26T06:05:18.947Z">
 <meta name="twitter:card" content="summary">
-<meta name="twitter:title" content="ftp关键技术四：空闲断开">
-<meta name="twitter:description" content="首先提出一个问题，我们为什么需要空闲断开？ ​    对于服务端而言，由于连接数和内存的限制，我们不可能对一个长时间处于不活跃的客户端，单独维护一个fd，一个进程/线程始终为其服务，fd单个进程上限默认值为1024，由于内存的限制，也不能无限制的分配出进程或者线程为其服务，这个时候我们就需要断开在规定时间内没有任何动作的客户端，腾出内存为其他客户端服务。 第二个问题，我们要基于什么实现空闲断开呢">
+<meta name="twitter:title" content="Solitude">
+<meta name="twitter:description" content="西邮16级学生，爱好游戏，致力于研究服务端开发各种技术，能力有限，此为博客一枚">
   
     <link rel="alternative" href="/atom.xml" title="Solitude" type="application/atom+xml">
   
@@ -143,237 +142,64 @@
             <canvas data-colors="#eaeaea" data-sectionHeight="100" data-contentId="js-content" id="myCanvas1" class="anm-canvas"></canvas>
           </div>
           <div id="js-content" class="content-ll">
-            <article id="post-ftp关键技术四：空闲断开" class="article article-type-post " itemscope itemprop="blogPost">
-  <div class="article-inner">
-    
-      <header class="article-header">
-        
+            
   
-    <h1 class="article-title" itemprop="name">
-      ftp关键技术四：空闲断开
+  
+    
+    
+      
+      
+      <section class="archives-wrap">
+        <div class="archive-year-wrap">
+          <a href="/archives/2018" class="archive-year">2018</a>
+        </div>
+        <div class="archives">
+    
+    <article class="archive-article archive-type-post">
+  <div class="archive-article-inner">
+    <header class="archive-article-header">
+      	<div class="article-meta">
+	      	<a href="/2018/07/20/muduo源码学习笔记-1/" class="archive-article-date">
+  	<time datetime="2018-07-20T10:36:00.000Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2018-07-20</time>
+</a>
+        </div>
+    	 
+  
+    <h1 itemprop="name">
+      <a class="archive-article-title" href="/2018/07/20/muduo源码学习笔记-1/">muduo源码学习笔记(1)</a>
     </h1>
   
 
-        
-        <a href="/2018/06/13/ftp关键技术四：空闲断开/" class="archive-article-date">
-  	<time datetime="2018-06-13T08:40:00.000Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2018-06-13</time>
-</a>
-        
-      </header>
-    
-    <div class="article-entry" itemprop="articleBody">
-      
-        <hr>
-<p><strong>首先提出一个问题，我们为什么需要空闲断开？</strong></p>
-<p>​    对于服务端而言，由于连接数和内存的限制，我们不可能对一个长时间处于不活跃的客户端，单独维护一个fd，一个进程/线程始终为其服务，fd单个进程上限默认值为1024，由于内存的限制，也不能无限制的分配出进程或者线程为其服务，这个时候我们就需要断开在规定时间内没有任何动作的客户端，腾出内存为其他客户端服务。</p>
-<p><strong>第二个问题，我们要基于什么实现空闲断开呢？</strong></p>
-<p>​    我们可以先设想需要一个可以在一定时间后能唤醒一个断开的服务的东西，而不是我们去维护一个进程，负责更新时间和断开（这样代价太大）。</p>
-<p>​    然后就想到了信号，设置一个定时的信号。</p>
-<p>​    等等，在设置一个定时信号的时候，我们是不是在该考虑一个问题，假设我们服务一个终端的ftp客户端，恰巧它开始下载一个非常大的文件，恰巧下载时间超过了服务端设置的空闲断开时间，这个时候就尴尬了，按照之前的想法，我们会空闲断开（注意：终端的ftp客户端下载时候，不可以发送其他命令，当然ctrl +c 的 abort除外）。</p>
-<p>​    所以我们就需要先定义一个data_process，如果在进行数据传输的时候，就设置data_process为true,安装信号的时候，检测到data_process就不再安装限时信号。</p>
-<a id="more"></a>
-<p><strong>第三个问题，如何实现呢？</strong></p>
-<p>​    首先，我们需要现在session中，安装data_process，session是每个进程维护一个包含配置文件和进程信息的一个全局节点。</p>
-<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"></span><br><span class="line"><span class="keyword">typedef</span> <span class="class"><span class="keyword">struct</span> <span class="title">session_t</span></span></span><br><span class="line"><span class="class">&#123;</span></span><br><span class="line">	...</span><br><span class="line">    <span class="comment">// 是否数据连接</span></span><br><span class="line">    <span class="keyword">int</span> data_process;</span><br><span class="line">    ...</span><br><span class="line">&#125;<span class="keyword">session_t</span> ;</span><br></pre></td></tr></table></figure>
-<p>​    然后我们就可以开始设置信号了，注意为我们需要为cmd模式和transfer data模式各自设置一个信号。</p>
-<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;signal.h&gt;</span></span></span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">typedef</span> <span class="title">void</span> <span class="params">(*<span class="keyword">sighandler_t</span>)</span><span class="params">(<span class="keyword">int</span>)</span></span>;</span><br><span class="line"></span><br><span class="line"><span class="keyword">sighandler_t</span> signal(<span class="keyword">int</span> signum, <span class="keyword">sighandler_t</span> handler);</span><br></pre></td></tr></table></figure>
-<p>​    首先看到这个函数，可能很多人都不明白这个函数是在做什么，大致可以理解它传入一个signum(待会见)和一个函数指针。所以我从以下三个方面说明这个函数：</p>
-<ul>
-<li>参数是一个int</li>
-<li>无返回值</li>
-<li>作用是用来处理产生的信号(signum)</li>
-</ul>
-<p>​       于是我们在关注这个signal函数，它是一个典型的回调函数，在我们设置一个信号的时候，我们会传入一个new handler，它会返回一个old handler，在出错的时候会返回一个SIG_ERR。</p>
-<p>​    我们可以man 7 signal，获得详细的signum所对应的宏定义和相关说明。</p>
-<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">SIGALRM      <span class="number">14</span>       <span class="function">Term    Timer signal from <span class="title">alarm</span><span class="params">(<span class="number">2</span>)</span></span></span><br></pre></td></tr></table></figure>
-<p>​    这个用于设置一个alrm信号，用来捕捉alarm产生的信号。</p>
-<p>​       If seconds is zero, any pending alarm is canceled.  </p>
-<p>​          In any event any previously set alarm() is canceled.</p>
-<p>这个是man 文档中的原文，我觉得这个写的非常干练，就不在累赘翻译了。而且这个也是可以重复刷新空闲时间的原因！</p>
-<p>所以下面我们就开始写函数的实现把！</p>
-<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">void</span> <span class="title">start_cmdio_alarm</span><span class="params">()</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    <span class="keyword">if</span> (tunable_idle_session_timeout &gt; <span class="number">0</span>)</span><br><span class="line">    &#123;</span><br><span class="line">        <span class="comment">//安装信号</span></span><br><span class="line">        signal(SIGALRM, handle_alarm_timeout);</span><br><span class="line">        <span class="comment">//启动闹钟</span></span><br><span class="line">        alarm(tunable_idle_session_timeout);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"><span class="function"><span class="keyword">void</span> <span class="title">start_data_alarm</span><span class="params">()</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    <span class="keyword">if</span> (tunable_data_connection_timeout &gt; <span class="number">0</span>)</span><br><span class="line">    &#123;</span><br><span class="line">        <span class="comment">//安装信号</span></span><br><span class="line">        signal(SIGALRM, handle_sigalrm);</span><br><span class="line">        <span class="comment">//启动闹钟</span></span><br><span class="line">        alarm(tunable_data_connection_timeout);</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">else</span> <span class="keyword">if</span>(tunable_idle_session_timeout &gt; <span class="number">0</span>)</span><br><span class="line">    &#123;</span><br><span class="line">        alarm(<span class="number">0</span>);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<p>在这里我们实现了两种信号，分别用于设置两种模式，固然也需要两种handler函数用于处理这个信号！</p>
-<p>注意我们这里增加了一个tunable_data_connection_timeout，这个是用来控制数据传输链接超时的情况，我们不永远等待一个始终不进行的数据链接传输却发送数据链接请求的进程吧！！！</p>
-<p>请再等等，这里我们就产生了第四个问题。</p>
-<p><strong>第四个问题，我们要怎么样关闭链接才合适？</strong></p>
-<p>​    先假设一种情况，我们在处理函数先发送一个进程链接被终止信号，然后直接close 掉链接的fd，这会发生一种什么情况，说一种很无聊的情况，假设一个客户端在收到被终止信号，立即发送一个命令，无论什么命令，这个时候会产生什么情况，信号又被重新设置了？？？到底会发生？？？可以看来这样并不安全。</p>
-<p>​    这个时候就有一种较为安全的情况，我们可以先关闭读，然后给客户端发送终止信号，然后关闭写。<br><figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">void</span> <span class="title">handle_alarm_timeout</span><span class="params">(<span class="keyword">int</span> sig)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    shutdown(p_sess-&gt;ctrl_fd, SHUT_RD);</span><br><span class="line">    ftp_reply(p_sess, FTP_IDLE_TIMEOUT, <span class="string">"Timeout"</span>);</span><br><span class="line">    shutdown(p_sess-&gt;ctrl_fd, SHUT_WR);</span><br><span class="line">    <span class="built_in">exit</span>(EXIT_FAILURE);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
-<p>​    然后我们要怎么处理data模式呢？</p>
-<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">void</span> <span class="title">handle_sigalrm</span><span class="params">(<span class="keyword">int</span> sig)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    <span class="keyword">if</span> (!p_sess-&gt;data_process)</span><br><span class="line">    &#123;</span><br><span class="line">        ftp_reply(p_sess, FTP_DATA_TIMEOUT, <span class="string">"Data timeout, Reconnect sorry"</span>);</span><br><span class="line">        <span class="built_in">exit</span>(EXIT_FAILURE);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">//否则　当前处于数据传输的状态收到了超时信号</span></span><br><span class="line">    p_sess-&gt;data_process = <span class="number">1</span>;</span><br><span class="line">    start_data_alarm();</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<p>完整的项目在 ：<a href="https://github.com/angeltears/ftp" target="_blank" rel="noopener">https://github.com/angeltears/ftp</a></p>
-<p>欢迎大家讨论和分享问题。</p>
-
-      
-
-      
-        <div class="page-reward">
-          <a href="javascript:;" class="page-reward-btn tooltip-top">
-            <div class="tooltip tooltip-east">
-            <span class="tooltip-item">
-              赏
-            </span>
-            <span class="tooltip-content">
-              <span class="tooltip-text">
-                <span class="tooltip-inner">
-                  <p class="reward-p"><i class="icon icon-quo-left"></i>谢谢你请我吃糖果<i class="icon icon-quo-right"></i></p>
-                  <div class="reward-box">
-                    
-                    
-                  </div>
-                </span>
-              </span>
-            </span>
-          </div>
-          </a>
-        </div>
-      
-    </div>
-    <div class="article-info article-info-index">
-      
-      
+        <div class="article-info info-on-right">
+          
 	<div class="article-tag tagcloud">
 		<i class="icon-price-tags icon"></i>
 		<ul class="article-tag-list">
 			 
         		<li class="article-tag-list-item">
-        			<a href="javascript:void(0)" class="js-tag article-tag-list-link color4">FTP</a>
+        			<a href="javascript:void(0)" class="js-tag article-tag-list-link color4">多线程</a>
+        		</li>
+      		 
+        		<li class="article-tag-list-item">
+        			<a href="javascript:void(0)" class="js-tag article-tag-list-link color1">muduo</a>
         		</li>
       		
 		</ul>
 	</div>
 
-      
+          
 
-      
-
-      
-        
-<div class="share-btn share-icons tooltip-left">
-  <div class="tooltip tooltip-east">
-    <span class="tooltip-item">
-      <a href="javascript:;" class="share-sns share-outer">
-        <i class="icon icon-share"></i>
-      </a>
-    </span>
-    <span class="tooltip-content">
-      <div class="share-wrap">
-        <div class="share-icons">
-          <a class="weibo share-sns" href="javascript:;" data-type="weibo">
-            <i class="icon icon-weibo"></i>
-          </a>
-          <a class="weixin share-sns wxFab" href="javascript:;" data-type="weixin">
-            <i class="icon icon-weixin"></i>
-          </a>
-          <a class="qq share-sns" href="javascript:;" data-type="qq">
-            <i class="icon icon-qq"></i>
-          </a>
-          <a class="douban share-sns" href="javascript:;" data-type="douban">
-            <i class="icon icon-douban"></i>
-          </a>
-          <a class="qzone share-sns" href="javascript:;" data-type="qzone">
-            <i class="icon icon-qzone"></i>
-          </a>
-          <a class="facebook share-sns" href="javascript:;" data-type="facebook">
-            <i class="icon icon-facebook"></i>
-          </a>
-          <a class="twitter share-sns" href="javascript:;" data-type="twitter">
-            <i class="icon icon-twitter"></i>
-          </a>
-          <a class="google share-sns" href="javascript:;" data-type="google">
-            <i class="icon icon-google"></i>
-          </a>
         </div>
-      </div>
-    </span>
-  </div>
-</div>
-
-<div class="page-modal wx-share js-wx-box">
-    <a class="close js-modal-close" href="javascript:;"><i class="icon icon-close"></i></a>
-    <p>扫一扫，分享到微信</p>
-    <div class="wx-qrcode">
-      <img src="//pan.baidu.com/share/qrcode?url=https://justsolitude.com/2018/06/13/ftp关键技术四：空闲断开/" alt="微信分享二维码">
-    </div>
-</div>
-
-<div class="mask js-mask"></div>
-      
-      <div class="clearfix"></div>
-    </div>
+        <div class="clearfix"></div>
+    </header>
   </div>
 </article>
-
-  
-<nav id="article-nav">
-  
-    <a href="/2018/07/18/ftp关键技术五:限制链接数/" id="article-nav-newer" class="article-nav-link-wrap">
-      <i class="icon-circle-left"></i>
-      <div class="article-nav-title">
-        
-          ftp关键技术五:限制链接数
-        
-      </div>
-    </a>
   
   
-    <a href="/2018/06/10/ftp关键技术三：被动模式和主动模式/" id="article-nav-older" class="article-nav-link-wrap">
-      <div class="article-nav-title">ftp关键技术三：被动模式和主动模式</div>
-      <i class="icon-circle-right"></i>
-    </a>
-  
-</nav>
-
-
-<aside class="wrap-side-operation">
-    <div class="mod-side-operation">
-        
-        <div class="jump-container" id="js-jump-container" style="display:none;">
-            <a href="javascript:void(0)" class="mod-side-operation__jump-to-top">
-                <i class="icon-font icon-back"></i>
-            </a>
-            <div id="js-jump-plan-container" class="jump-plan-container" style="top: -11px;">
-                <i class="icon-font icon-plane jump-plane"></i>
-            </div>
-        </div>
-        
-        
-        <div class="toc-container tooltip-left">
-            <i class="icon-font icon-category"></i>
-            <div class="tooltip tooltip-east">
-                <span class="tooltip-item">
-                </span>
-                <span class="tooltip-content">
-                    <div class="toc-article">
-                    目录，不存在的…
-                    </div>
-                </span>
-            </div>
-        </div>
-        
-    </div>
-</aside>
-
-
-
-  
-  
+    </div></section>
   
 
-  
-  <div id="SOHUCS" sid="ftp关键技术四：空闲断开" ></div> 
-<script charset="utf-8" type="text/javascript" src="//changyan.sohu.com/upload/changyan.js" ></script>
-<script type="text/javascript">
-    window.changyan.api.config({
-        appid: "cytJs2M3p",
-        conf: "e1329fd3d49367d0715ddbdb345964a6"
-    });
-</script>
-</script>
-  
-
-  
-
-  
+    
 
 
           </div>
@@ -396,9 +222,9 @@
 	var yiliaConfig = {
 		mathjax: false,
 		isHome: false,
-		isPost: true,
+		isPost: false,
 		isArchive: false,
-		isTag: false,
+		isTag: true,
 		isCategory: false,
 		open_in_new: false,
 		toc_hide_index: true,
