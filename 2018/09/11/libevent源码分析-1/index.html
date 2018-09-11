@@ -6,19 +6,20 @@
   <meta name="renderer" content="webkit">
   <meta http-equiv="X-UA-Compatible" content="IE=edge" >
   <link rel="dns-prefetch" href="https://justsolitude.com">
-  <title>Archives: 2018/5 | Solitude</title>
+  <title>libevent源码分析(1) | Solitude</title>
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
-  <meta name="description" content="西邮16级学生，爱好游戏，致力于研究服务端开发各种技术，能力有限，此为博客一枚">
-<meta name="keywords" content="后端,c++,linuxer,多线程,高并发,开发者,程序猿,,极客,编程,代码,开源,IT网站,Developer,Programmer,Coder">
-<meta property="og:type" content="website">
-<meta property="og:title" content="Solitude">
-<meta property="og:url" content="https://justsolitude.com/archives/2018/05/index.html">
+  <meta name="description" content="写在前面： ​    这个源码是分析libevent-2.0.20-stable, 并非最新版本的libevent，作者并没有全看源码，在这里会推荐以下参考的一些网站，也欢迎大家在不足的地方提出来进行讨论。 ​     ​     ​     在event2/event.h中定义了错误类型和错误的回调函数 12345678910111213141516171819#define EVENT_LOG">
+<meta name="keywords" content="libevent">
+<meta property="og:type" content="article">
+<meta property="og:title" content="libevent源码分析(1)">
+<meta property="og:url" content="https://justsolitude.com/2018/09/11/libevent源码分析-1/index.html">
 <meta property="og:site_name" content="Solitude">
-<meta property="og:description" content="西邮16级学生，爱好游戏，致力于研究服务端开发各种技术，能力有限，此为博客一枚">
+<meta property="og:description" content="写在前面： ​    这个源码是分析libevent-2.0.20-stable, 并非最新版本的libevent，作者并没有全看源码，在这里会推荐以下参考的一些网站，也欢迎大家在不足的地方提出来进行讨论。 ​     ​     ​     在event2/event.h中定义了错误类型和错误的回调函数 12345678910111213141516171819#define EVENT_LOG">
 <meta property="og:locale" content="default">
+<meta property="og:updated_time" content="2018-09-11T11:07:13.234Z">
 <meta name="twitter:card" content="summary">
-<meta name="twitter:title" content="Solitude">
-<meta name="twitter:description" content="西邮16级学生，爱好游戏，致力于研究服务端开发各种技术，能力有限，此为博客一枚">
+<meta name="twitter:title" content="libevent源码分析(1)">
+<meta name="twitter:description" content="写在前面： ​    这个源码是分析libevent-2.0.20-stable, 并非最新版本的libevent，作者并没有全看源码，在这里会推荐以下参考的一些网站，也欢迎大家在不足的地方提出来进行讨论。 ​     ​     ​     在event2/event.h中定义了错误类型和错误的回调函数 12345678910111213141516171819#define EVENT_LOG">
   
     <link rel="alternative" href="/atom.xml" title="Solitude" type="application/atom+xml">
   
@@ -142,136 +143,219 @@
             <canvas data-colors="#eaeaea" data-sectionHeight="100" data-contentId="js-content" id="myCanvas1" class="anm-canvas"></canvas>
           </div>
           <div id="js-content" class="content-ll">
-            
-  
-  
+            <article id="post-libevent源码分析-1" class="article article-type-post " itemscope itemprop="blogPost">
+  <div class="article-inner">
     
+      <header class="article-header">
+        
+  
+    <h1 class="article-title" itemprop="name">
+      libevent源码分析(1)
+    </h1>
+  
+
+        
+        <a href="/2018/09/11/libevent源码分析-1/" class="archive-article-date">
+  	<time datetime="2018-09-11T11:00:00.000Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2018-09-11</time>
+</a>
+        
+      </header>
     
+    <div class="article-entry" itemprop="articleBody">
+      
+        <p>写在前面：</p>
+<p>​    这个源码是分析libevent-2.0.20-stable, 并非最新版本的libevent，作者并没有全看源码，在这里会推荐以下参考的一些网站，也欢迎大家在不足的地方提出来进行讨论。</p>
+<p>​    <a href="https://blog.csdn.net/luotuo44/article/list/3" target="_blank" rel="noopener"></a></p>
+<p>​    <a href="https://blog.csdn.net/jcjx0315/article/details/79693484" target="_blank" rel="noopener"></a></p>
+<p>​    <a href="https://blog.csdn.net/sparkliang/article/details/4957667" target="_blank" rel="noopener"></a></p>
+<p>在event2/event.h中定义了错误类型和错误的回调函数</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="meta-keyword">define</span> EVENT_LOG_DEBUG 0</span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">define</span> EVENT_LOG_MSG   1</span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">define</span> EVENT_LOG_WARN  2</span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">define</span> EVENT_LOG_ERR   3</span></span><br><span class="line"></span><br><span class="line"><span class="meta">#<span class="meta-keyword">define</span> _EVENT_LOG_DEBUG EVENT_LOG_DEBUG</span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">define</span> _EVENT_LOG_MSG EVENT_LOG_MSG</span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">define</span> _EVENT_LOG_WARN EVENT_LOG_WARN</span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">define</span> _EVENT_LOG_ERR EVENT_LOG_ERR</span></span><br><span class="line"></span><br><span class="line"><span class="comment">// 日志回调函数的格式和日志定制函数</span></span><br><span class="line"><span class="function"><span class="keyword">typedef</span> <span class="title">void</span> <span class="params">(*event_log_cb)</span><span class="params">(<span class="keyword">int</span> severity, <span class="keyword">const</span> <span class="keyword">char</span> *msg)</span></span>;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">void</span> <span class="title">event_set_log_callback</span><span class="params">(event_log_cb cb)</span></span>;　</span><br><span class="line"></span><br><span class="line"><span class="comment">// 出错回调函数的格式和错误定制函数</span></span><br><span class="line"><span class="function"><span class="keyword">typedef</span> <span class="title">void</span> <span class="params">(*event_fatal_cb)</span><span class="params">(<span class="keyword">int</span> err)</span></span>;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">void</span> <span class="title">event_set_fatal_callback</span><span class="params">(event_fatal_cb cb)</span></span>;</span><br></pre></td></tr></table></figure>
+<p>在实现上，在log.c中，定义了两个全局的静态变量和设置两个静态变量的回调函数</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">static</span> event_fatal_cb fatal_fn = <span class="literal">NULL</span>;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">void</span>　<span class="title">event_set_fatal_callback</span><span class="params">(event_fatal_cb cb)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">	fatal_fn = cb;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">static</span> event_log_cb log_fn = <span class="literal">NULL</span>;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">void</span>　<span class="title">event_set_log_callback</span><span class="params">(event_log_cb cb)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">	log_fn = cb;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<pre><code>从event_set_log_callback的实现代码可以看到，并没有对这个参数cb做任何检查。
+</code></pre><p>​    Libevent的默认日志处理函数event_log函数和错误处理函数还是很简陋的，前者只是简单判断错误类型，后者只是简单地根据参数判断日志记录的级别，然后把级别和日志内容输出。    </p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">static</span> <span class="keyword">void</span>　<span class="title">event_exit</span><span class="params">(<span class="keyword">int</span> errcode)</span>   </span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">	<span class="keyword">if</span> (fatal_fn) &#123;　　　  　　<span class="comment">//如果错误出错函数被定义</span></span><br><span class="line">		fatal_fn(errcode);　　<span class="comment">//执行用户的出错函数,但是并不能让服务器不退出！</span></span><br><span class="line">		<span class="built_in">exit</span>(errcode); <span class="comment">/* should never be reached */</span></span><br><span class="line">	&#125; <span class="keyword">else</span> <span class="keyword">if</span> (errcode == _EVENT_ERR_ABORT)</span><br><span class="line">		<span class="built_in">abort</span>();</span><br><span class="line">	<span class="keyword">else</span></span><br><span class="line">		<span class="built_in">exit</span>(errcode);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">static</span> <span class="keyword">void</span> <span class="title">event_log</span><span class="params">(<span class="keyword">int</span> severity, <span class="keyword">const</span> <span class="keyword">char</span> *msg)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">	<span class="keyword">if</span> (log_fn)     <span class="comment">//定义了自己的出错处理函数　</span></span><br><span class="line">		log_fn(severity, msg);　　<span class="comment">//调用自己的出错函数</span></span><br><span class="line">	<span class="keyword">else</span> </span><br><span class="line">    &#123;</span><br><span class="line">		<span class="keyword">const</span> <span class="keyword">char</span> *severity_str;</span><br><span class="line">		<span class="keyword">switch</span> (severity)</span><br><span class="line">        &#123;</span><br><span class="line">		<span class="keyword">case</span> _EVENT_LOG_DEBUG:</span><br><span class="line">			severity_str = <span class="string">"debug"</span>;</span><br><span class="line">			<span class="keyword">break</span>;</span><br><span class="line">		<span class="keyword">case</span> _EVENT_LOG_MSG:</span><br><span class="line">			severity_str = <span class="string">"msg"</span>;</span><br><span class="line">			<span class="keyword">break</span>;</span><br><span class="line">		<span class="keyword">case</span> _EVENT_LOG_WARN:</span><br><span class="line">			severity_str = <span class="string">"warn"</span>;</span><br><span class="line">			<span class="keyword">break</span>;</span><br><span class="line">		<span class="keyword">case</span> _EVENT_LOG_ERR:</span><br><span class="line">			severity_str = <span class="string">"err"</span>;</span><br><span class="line">			<span class="keyword">break</span>;</span><br><span class="line">		<span class="keyword">default</span>:</span><br><span class="line">			severity_str = <span class="string">"???"</span>;</span><br><span class="line">			<span class="keyword">break</span>;</span><br><span class="line">		&#125;</span><br><span class="line">		(<span class="keyword">void</span>)<span class="built_in">fprintf</span>(<span class="built_in">stderr</span>, <span class="string">"[%s] %s\n"</span>, severity_str, msg);　　　</span><br><span class="line">            <span class="comment">//　仅仅把错误输出到stderr</span></span><br><span class="line">        	<span class="comment">//　fixme: 可以加上时间、文件名、行号和函数名</span></span><br><span class="line">	&#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>#####日志API以及日志消息处理流程：</p>
+<p>​    在将日志处理函数API之前，我们需要先了解两个宏的用法</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="meta-keyword">define</span> EV_CHECK_FMT(a,b) __attribute__((format(printf, a, b)))</span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">define</span> EV_NORETURN __attribute__((noreturn))</span></span><br></pre></td></tr></table></figure>
+<p>​    第一个宏，口说无凭，我们先做个小小test，来看看这个宏的作用</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// 仿照日志处理api的方法定义了一个</span></span><br><span class="line">extern void myprint(const char *format,...) __attribute__((format(printf,1,2)));</span><br><span class="line"><span class="function"><span class="keyword">void</span> <span class="title">myprint</span><span class="params">(<span class="keyword">const</span> <span class="keyword">char</span>* format, ...)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    va_list ap;</span><br><span class="line">    va_start(ap, format);</span><br><span class="line">    <span class="keyword">char</span> buf[<span class="number">1024</span>];</span><br><span class="line">    <span class="built_in">memset</span>(buf, <span class="number">0</span> , <span class="keyword">sizeof</span>(buf));</span><br><span class="line">    vsnprintf(buf, <span class="number">1023</span>, format, ap);</span><br><span class="line">    (<span class="keyword">void</span>)<span class="built_in">printf</span>(<span class="string">"%s"</span>,buf);</span><br><span class="line">    va_end(ap);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">main</span><span class="params">()</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    myprint(<span class="string">"i=%d/n"</span>,<span class="number">6</span>);</span><br><span class="line">    myprint(<span class="string">"i=%s/n"</span>,<span class="number">6</span>);</span><br><span class="line">    myprint(<span class="string">"i=%s/n"</span>,<span class="string">"abc"</span>);</span><br><span class="line">    myprint(<span class="string">"%s,%d,%d/n"</span>,<span class="number">1</span>,<span class="number">2</span>);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>​    编译结果</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"> warning: format ‘%s’ expects argument of type ‘<span class="keyword">char</span>*’, but argument <span class="number">2</span> has type ‘<span class="keyword">int</span>’ [-Wformat=]</span><br><span class="line">     myprint(<span class="string">"i=%s/n"</span>,<span class="number">6</span>);</span><br><span class="line">                       ^</span><br><span class="line"> warning: format ‘%s’ expects argument of type ‘<span class="keyword">char</span>*’, but argument <span class="number">2</span> has type ‘<span class="keyword">int</span>’ [-Wformat=]</span><br><span class="line">     myprint(<span class="string">"%s,%d,%d/n"</span>,<span class="number">1</span>,<span class="number">2</span>);</span><br><span class="line">                             ^</span><br><span class="line">warning: format ‘%d’ expects a matching ‘<span class="keyword">int</span>’ argument [-Wformat=]</span><br></pre></td></tr></table></figure>
+<p>​    format属性可以给被声明的函数加上类似printf或者scanf的特征，它可以使编译器检查函数声明和函数实际调用参数之间的格式化字符串是否匹配。</p>
+<p>​    format (archetype, string-index, first-to-check) 第一参数需要传递“archetype”指定是哪种风格,这里是 NSString；“string-index”指定传入函数的第几个参数是格式化字符串；“first-to-check”指定第一个可变参数所在的索引.</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><span class="line"></span><br><span class="line"><span class="comment">//void __attribute__((noreturn)) onExit();</span></span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">void</span> <span class="title">onExit</span><span class="params">()</span></span></span><br><span class="line"><span class="function"></span>&#123;&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">test</span><span class="params">(<span class="keyword">int</span> state)</span> </span>&#123;</span><br><span class="line">    <span class="keyword">if</span> (state == <span class="number">1</span>) &#123;</span><br><span class="line">        onExit();</span><br><span class="line">    &#125;<span class="keyword">else</span> &#123;</span><br><span class="line">        <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">main</span><span class="params">()</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    test(<span class="number">1</span>);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>​    当注释取消的时候，编译时候，会出现一条警告‘noreturn’ function does return。</p>
+<p>​    作用:定义有返回值的函数时，而实际情况有可能没有返回值，此时编译器会报错。</p>
+<p>​    在log-internal.h中定义了一系列日志处理函数API</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">void</span> <span class="title">event_err</span><span class="params">(<span class="keyword">int</span> eval, <span class="keyword">const</span> <span class="keyword">char</span> *fmt, ...)</span> <span class="title">EV_CHECK_FMT</span><span class="params">(<span class="number">2</span>,<span class="number">3</span>)</span> EV_NORETURN</span>;</span><br><span class="line"><span class="function"><span class="keyword">void</span> <span class="title">event_warn</span><span class="params">(<span class="keyword">const</span> <span class="keyword">char</span> *fmt, ...)</span> <span class="title">EV_CHECK_FMT</span><span class="params">(<span class="number">1</span>,<span class="number">2</span>)</span></span>;</span><br><span class="line"><span class="function"><span class="keyword">void</span> <span class="title">event_sock_err</span><span class="params">(<span class="keyword">int</span> eval, <span class="keyword">evutil_socket_t</span> sock, <span class="keyword">const</span> <span class="keyword">char</span> *fmt, ...)</span> <span class="title">EV_CHECK_FMT</span><span class="params">(<span class="number">3</span>,<span class="number">4</span>)</span> EV_NORETURN</span>;</span><br><span class="line"><span class="function"><span class="keyword">void</span> <span class="title">event_sock_warn</span><span class="params">(<span class="keyword">evutil_socket_t</span> sock, <span class="keyword">const</span> <span class="keyword">char</span> *fmt, ...)</span> <span class="title">EV_CHECK_FMT</span><span class="params">(<span class="number">2</span>,<span class="number">3</span>)</span></span>;</span><br><span class="line"><span class="function"><span class="keyword">void</span> <span class="title">event_errx</span><span class="params">(<span class="keyword">int</span> eval, <span class="keyword">const</span> <span class="keyword">char</span> *fmt, ...)</span> <span class="title">EV_CHECK_FMT</span><span class="params">(<span class="number">2</span>,<span class="number">3</span>)</span> EV_NORETURN</span>;</span><br><span class="line"><span class="function"><span class="keyword">void</span> <span class="title">event_warnx</span><span class="params">(<span class="keyword">const</span> <span class="keyword">char</span> *fmt, ...)</span> <span class="title">EV_CHECK_FMT</span><span class="params">(<span class="number">1</span>,<span class="number">2</span>)</span></span>;</span><br><span class="line"><span class="function"><span class="keyword">void</span> <span class="title">event_msgx</span><span class="params">(<span class="keyword">const</span> <span class="keyword">char</span> *fmt, ...)</span> <span class="title">EV_CHECK_FMT</span><span class="params">(<span class="number">1</span>,<span class="number">2</span>)</span></span>;</span><br><span class="line"><span class="keyword">void</span> _event_debugx(<span class="keyword">const</span> <span class="keyword">char</span> *fmt, ...) EV_CHECK_FMT(<span class="number">1</span>,<span class="number">2</span>);</span><br></pre></td></tr></table></figure>
+<p>​    这些函数实现的功能大致为，获取错误的名称，获取错误描述，获取输出格式，获取输出字符串。</p>
+<p>​    然后它们会共同调用_warn_helpr这个函数　</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">/**</span></span><br><span class="line"><span class="comment">* 仅供内部函数调用</span></span><br><span class="line"><span class="comment">*/</span></span><br><span class="line"><span class="keyword">static</span> <span class="keyword">void</span></span><br><span class="line">_warn_helper(<span class="keyword">int</span> severity, <span class="keyword">const</span> <span class="keyword">char</span> *errstr, <span class="keyword">const</span> <span class="keyword">char</span> *fmt, va_list ap)</span><br><span class="line">&#123;</span><br><span class="line">	<span class="keyword">char</span> buf[<span class="number">1024</span>];</span><br><span class="line">	<span class="keyword">size_t</span> len;</span><br><span class="line"></span><br><span class="line">	<span class="keyword">if</span> (fmt != <span class="literal">NULL</span>)</span><br><span class="line">         <span class="comment">// evutil_vsnprintf可以vsnprntf，跨平台设计本文不涉及，细节它会在buf[sizeof(buf) -1]处替换成/0　</span></span><br><span class="line">		evutil_vsnprintf(buf, <span class="keyword">sizeof</span>(buf), fmt, ap);  </span><br><span class="line">	<span class="keyword">else</span></span><br><span class="line">		buf[<span class="number">0</span>] = <span class="string">'\0'</span>;</span><br><span class="line"></span><br><span class="line">	<span class="keyword">if</span> (errstr) &#123;</span><br><span class="line">		len = <span class="built_in">strlen</span>(buf);</span><br><span class="line">		<span class="keyword">if</span> (len &lt; <span class="keyword">sizeof</span>(buf) - <span class="number">3</span>) &#123;</span><br><span class="line">			evutil_snprintf(buf + len, <span class="keyword">sizeof</span>(buf) - len, <span class="string">": %s"</span>, errstr);</span><br><span class="line">		&#125;</span><br><span class="line">	&#125;</span><br><span class="line">	event_log(severity, buf);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<pre><code>小结：libevent的日志库较为简略，用了两个全局的回调函数指针实现自定义处理，几乎没有做什么特别处理，不过在检查输入格式和输入信息的匹配值得学习。
+</code></pre>
+      
+
+      
+        <div class="page-reward">
+          <a href="javascript:;" class="page-reward-btn tooltip-top">
+            <div class="tooltip tooltip-east">
+            <span class="tooltip-item">
+              赏
+            </span>
+            <span class="tooltip-content">
+              <span class="tooltip-text">
+                <span class="tooltip-inner">
+                  <p class="reward-p"><i class="icon icon-quo-left"></i>谢谢你请我吃糖果<i class="icon icon-quo-right"></i></p>
+                  <div class="reward-box">
+                    
+                    
+                  </div>
+                </span>
+              </span>
+            </span>
+          </div>
+          </a>
+        </div>
+      
+    </div>
+    <div class="article-info article-info-index">
       
       
-      <section class="archives-wrap">
-        <div class="archive-year-wrap">
-          <a href="/archives/2018" class="archive-year">2018</a>
-        </div>
-        <div class="archives">
-    
-    <article class="archive-article archive-type-post">
-  <div class="archive-article-inner">
-    <header class="archive-article-header">
-      	<div class="article-meta">
-	      	<a href="/2018/05/29/ftp关键技术二-nobody进程创建和使用（一）/" class="archive-article-date">
-  	<time datetime="2018-05-29T09:40:00.000Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2018-05-29</time>
-</a>
-        </div>
-    	 
-  
-    <h1 itemprop="name">
-      <a class="archive-article-title" href="/2018/05/29/ftp关键技术二-nobody进程创建和使用（一）/">ftp关键技术二:nobody进程创建和使用（一）</a>
-    </h1>
-  
-
-        <div class="article-info info-on-right">
-          
 	<div class="article-tag tagcloud">
 		<i class="icon-price-tags icon"></i>
 		<ul class="article-tag-list">
 			 
         		<li class="article-tag-list-item">
-        			<a href="javascript:void(0)" class="js-tag article-tag-list-link color4">FTP</a>
+        			<a href="javascript:void(0)" class="js-tag article-tag-list-link color4">libevent</a>
         		</li>
       		
 		</ul>
 	</div>
 
-          
+      
 
+      
+
+      
+        
+<div class="share-btn share-icons tooltip-left">
+  <div class="tooltip tooltip-east">
+    <span class="tooltip-item">
+      <a href="javascript:;" class="share-sns share-outer">
+        <i class="icon icon-share"></i>
+      </a>
+    </span>
+    <span class="tooltip-content">
+      <div class="share-wrap">
+        <div class="share-icons">
+          <a class="weibo share-sns" href="javascript:;" data-type="weibo">
+            <i class="icon icon-weibo"></i>
+          </a>
+          <a class="weixin share-sns wxFab" href="javascript:;" data-type="weixin">
+            <i class="icon icon-weixin"></i>
+          </a>
+          <a class="qq share-sns" href="javascript:;" data-type="qq">
+            <i class="icon icon-qq"></i>
+          </a>
+          <a class="douban share-sns" href="javascript:;" data-type="douban">
+            <i class="icon icon-douban"></i>
+          </a>
+          <a class="qzone share-sns" href="javascript:;" data-type="qzone">
+            <i class="icon icon-qzone"></i>
+          </a>
+          <a class="facebook share-sns" href="javascript:;" data-type="facebook">
+            <i class="icon icon-facebook"></i>
+          </a>
+          <a class="twitter share-sns" href="javascript:;" data-type="twitter">
+            <i class="icon icon-twitter"></i>
+          </a>
+          <a class="google share-sns" href="javascript:;" data-type="google">
+            <i class="icon icon-google"></i>
+          </a>
         </div>
-        <div class="clearfix"></div>
-    </header>
+      </div>
+    </span>
+  </div>
+</div>
+
+<div class="page-modal wx-share js-wx-box">
+    <a class="close js-modal-close" href="javascript:;"><i class="icon icon-close"></i></a>
+    <p>扫一扫，分享到微信</p>
+    <div class="wx-qrcode">
+      <img src="//pan.baidu.com/share/qrcode?url=https://justsolitude.com/2018/09/11/libevent源码分析-1/" alt="微信分享二维码">
+    </div>
+</div>
+
+<div class="mask js-mask"></div>
+      
+      <div class="clearfix"></div>
+    </div>
   </div>
 </article>
+
   
-    
-    
-    <article class="archive-article archive-type-post">
-  <div class="archive-article-inner">
-    <header class="archive-article-header">
-      	<div class="article-meta">
-	      	<a href="/2018/05/24/ftp关键技术二-nobody进程创建和使用（二）/" class="archive-article-date">
-  	<time datetime="2018-05-24T11:40:00.000Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2018-05-24</time>
-</a>
+<nav id="article-nav">
+  
+  
+    <a href="/2018/09/02/muduo源码学习笔记-1/" id="article-nav-older" class="article-nav-link-wrap">
+      <div class="article-nav-title">muduo源码学习笔记(1)</div>
+      <i class="icon-circle-right"></i>
+    </a>
+  
+</nav>
+
+
+<aside class="wrap-side-operation">
+    <div class="mod-side-operation">
+        
+        <div class="jump-container" id="js-jump-container" style="display:none;">
+            <a href="javascript:void(0)" class="mod-side-operation__jump-to-top">
+                <i class="icon-font icon-back"></i>
+            </a>
+            <div id="js-jump-plan-container" class="jump-plan-container" style="top: -11px;">
+                <i class="icon-font icon-plane jump-plane"></i>
+            </div>
         </div>
-    	 
-  
-    <h1 itemprop="name">
-      <a class="archive-article-title" href="/2018/05/24/ftp关键技术二-nobody进程创建和使用（二）/">ftp关键技术二:nobody进程创建和使用（二）</a>
-    </h1>
-  
-
-        <div class="article-info info-on-right">
-          
-	<div class="article-tag tagcloud">
-		<i class="icon-price-tags icon"></i>
-		<ul class="article-tag-list">
-			 
-        		<li class="article-tag-list-item">
-        			<a href="javascript:void(0)" class="js-tag article-tag-list-link color4">FTP</a>
-        		</li>
-      		
-		</ul>
-	</div>
-
-          
-
+        
+        
+        <div class="toc-container tooltip-left">
+            <i class="icon-font icon-category"></i>
+            <div class="tooltip tooltip-east">
+                <span class="tooltip-item">
+                </span>
+                <span class="tooltip-content">
+                    <div class="toc-article">
+                    目录，不存在的…
+                    </div>
+                </span>
+            </div>
         </div>
-        <div class="clearfix"></div>
-    </header>
-  </div>
-</article>
+        
+    </div>
+</aside>
+
+
+
   
-    
-    
-    <article class="archive-article archive-type-post">
-  <div class="archive-article-inner">
-    <header class="archive-article-header">
-      	<div class="article-meta">
-	      	<a href="/2018/05/20/ftp关键技术一-账户验证/" class="archive-article-date">
-  	<time datetime="2018-05-20T08:40:00.000Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2018-05-20</time>
-</a>
-        </div>
-    	 
   
-    <h1 itemprop="name">
-      <a class="archive-article-title" href="/2018/05/20/ftp关键技术一-账户验证/">ftp关键技术一:账户验证</a>
-    </h1>
   
 
-        <div class="article-info info-on-right">
-          
-	<div class="article-tag tagcloud">
-		<i class="icon-price-tags icon"></i>
-		<ul class="article-tag-list">
-			 
-        		<li class="article-tag-list-item">
-        			<a href="javascript:void(0)" class="js-tag article-tag-list-link color4">FTP</a>
-        		</li>
-      		
-		</ul>
-	</div>
-
-          
-
-        </div>
-        <div class="clearfix"></div>
-    </header>
-  </div>
-</article>
   
-  
-    </div></section>
+  <div id="SOHUCS" sid="libevent源码分析-1" ></div> 
+<script charset="utf-8" type="text/javascript" src="//changyan.sohu.com/upload/changyan.js" ></script>
+<script type="text/javascript">
+    window.changyan.api.config({
+        appid: "cytJs2M3p",
+        conf: "e1329fd3d49367d0715ddbdb345964a6"
+    });
+</script>
+</script>
   
 
-    
+  
+
+  
 
 
           </div>
@@ -294,8 +378,8 @@
 	var yiliaConfig = {
 		mathjax: false,
 		isHome: false,
-		isPost: false,
-		isArchive: true,
+		isPost: true,
+		isArchive: false,
 		isTag: false,
 		isCategory: false,
 		open_in_new: false,
