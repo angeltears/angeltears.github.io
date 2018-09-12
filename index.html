@@ -144,6 +144,98 @@
           <div id="js-content" class="content-ll">
             
   
+    <article id="post-muduo源码学习笔记-2" class="article article-type-post  article-index" itemscope itemprop="blogPost">
+  <div class="article-inner">
+    
+      <header class="article-header">
+        
+  
+    <h1 itemprop="name">
+      <a class="article-title" href="/2018/09/12/muduo源码学习笔记-2/">muduo源码学习笔记(2)</a>
+    </h1>
+  
+
+        
+        <a href="/2018/09/12/muduo源码学习笔记-2/" class="archive-article-date">
+  	<time datetime="2018-09-12T10:36:00.000Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2018-09-12</time>
+</a>
+        
+      </header>
+    
+    <div class="article-entry" itemprop="articleBody">
+      
+        <p>前言：</p>
+<p>​    对于muduo库，我觉得，光Linux多线程上提到的一些实现，还是不够的，在base/里面，还有/net里面提供了很多不错的实现，值得去学习，暑假算是看看muduo的百分之八十的源码，并对其进行了一次实现，（剩下的在最近总结的时候，也会开始看看，并实现一遍），对于muduo库，简单谈谈自己对其实现的理解。</p>
+<h5 id="日志缓存流LogStream"><a href="#日志缓存流LogStream" class="headerlink" title="日志缓存流LogStream"></a>日志缓存流LogStream</h5><p>​    在muduo实现的基础日志类，一共用来三个文件，LogFilem, LogStream,Loggin。本着自底向上原则，我们从底层的实现慢慢讲起。</p>
+<p>​    在LogStream中，定义了三个类，两个底层的类分别是FixedBuffer和Fmt。</p>
+<p>​    muduo在实现写日志的时候，并没有直接写向stderr或者IO流，而是会写入自己定义的FixedBuffer(缓冲流中)，下面就让我们看看缓冲流的定义和实现吧!</p>
+<p><img src="/photo/FixedBuffer.png" alt="FixedBuffer类图"></p>
+<p>​    FixedBuffer定义在namespace detail算是用户不可见,在创建FixedBuffer的时候可以向其输出大小来控制内部的buf的大小，也定义两个常量分别对应大小buf</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">const</span> <span class="keyword">int</span> kSmallBuffer = <span class="number">4000</span>;</span><br><span class="line"><span class="keyword">const</span> <span class="keyword">int</span> kLargeBuffer = <span class="number">4000</span> * <span class="number">1024</span>;</span><br></pre></td></tr></table></figure>
+<p>​    一共有三个成员，data_就是缓存的数据，cur_指向缓存数据的末尾的下一个和cookie_指针</p>
+<p>​    我们需要重点关注以下函数</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line">　<span class="comment">//追加字符串  </span></span><br><span class="line">　<span class="function"><span class="keyword">void</span> <span class="title">append</span><span class="params">(<span class="keyword">const</span> <span class="keyword">char</span>* <span class="comment">/*restrict*/</span> buf, <span class="keyword">size_t</span> len)</span></span></span><br><span class="line"><span class="function"> </span>&#123;</span><br><span class="line">   <span class="comment">// <span class="doctag">FIXME:</span> append partially</span></span><br><span class="line"><span class="keyword">if</span> (implicit_cast&lt;<span class="keyword">size_t</span>&gt;(avail()) &gt; len)</span><br><span class="line">   &#123;</span><br><span class="line">     <span class="built_in">memcpy</span>(cur_, buf, len);</span><br><span class="line">     cur_ += len;</span><br><span class="line">   &#125;</span><br><span class="line"> &#125;</span><br><span class="line">　<span class="comment">//设置缓存</span></span><br><span class="line"> void setCookie(void (*cookie)())</span><br><span class="line"> &#123; cookie_ = cookie; &#125;;</span><br></pre></td></tr></table></figure>
+<p>​    值得注意的是下面在实现转化的时候在detail中定义了</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">const</span> <span class="keyword">char</span> digits[] = <span class="string">"9876543210123456789"</span>;</span><br><span class="line"><span class="keyword">const</span> <span class="keyword">char</span>* zero = digits + <span class="number">9</span>;</span><br><span class="line">BOOST_STATIC_ASSERT(<span class="keyword">sizeof</span>(digits) == <span class="number">20</span>);</span><br><span class="line"></span><br><span class="line"><span class="keyword">const</span> <span class="keyword">char</span> digitsHex[] = <span class="string">"0123456789ABCDEF"</span>;</span><br><span class="line">BOOST_STATIC_ASSERT(<span class="keyword">sizeof</span> digitsHex == <span class="number">17</span>);</span><br><span class="line"></span><br><span class="line"><span class="comment">// 先用求余除法求出　value转化成字符串的倒着顺序的，然后用std::reverse对其进行倒转</span></span><br><span class="line"><span class="comment">//　另一方面用了取数的方法，相比直接申请赋值会更有效率一些</span></span><br><span class="line"><span class="keyword">template</span>&lt;<span class="keyword">typename</span> T&gt;</span><br><span class="line"><span class="keyword">size_t</span> convert(<span class="keyword">char</span> buf[], T value)</span><br><span class="line">&#123;</span><br><span class="line">  T i = value;</span><br><span class="line">  <span class="keyword">char</span>* p = buf;</span><br><span class="line"></span><br><span class="line">  <span class="keyword">do</span></span><br><span class="line">  &#123;</span><br><span class="line">    <span class="keyword">int</span> lsd = <span class="keyword">static_cast</span>&lt;<span class="keyword">int</span>&gt;(i % <span class="number">10</span>);</span><br><span class="line">    i /= <span class="number">10</span>;</span><br><span class="line">    *p++ = zero[lsd];</span><br><span class="line">  &#125; <span class="keyword">while</span> (i != <span class="number">0</span>);</span><br><span class="line"></span><br><span class="line">  <span class="keyword">if</span> (value &lt; <span class="number">0</span>)</span><br><span class="line">  &#123;</span><br><span class="line">    *p++ = <span class="string">'-'</span>;</span><br><span class="line">  &#125;</span><br><span class="line">  *p = <span class="string">'\0'</span>;</span><br><span class="line">  <span class="built_in">std</span>::reverse(buf, p);      </span><br><span class="line"></span><br><span class="line">  <span class="keyword">return</span> p - buf;</span><br><span class="line">&#125;</span><br><span class="line"><span class="comment">/// 同样的实现不过是１６进制的而已</span></span><br><span class="line"><span class="keyword">size_t</span> convertHex(<span class="keyword">char</span> buf[], <span class="keyword">uintptr_t</span> value)；</span><br></pre></td></tr></table></figure>
+        
+          <a class="article-more-a" href="/2018/09/12/muduo源码学习笔记-2/#more">more >></a>
+        
+      
+
+      
+    </div>
+    <div class="article-info article-info-index">
+      
+      
+	<div class="article-tag tagcloud">
+		<i class="icon-price-tags icon"></i>
+		<ul class="article-tag-list">
+			 
+        		<li class="article-tag-list-item">
+        			<a href="javascript:void(0)" class="js-tag article-tag-list-link color4">多线程</a>
+        		</li>
+      		 
+        		<li class="article-tag-list-item">
+        			<a href="javascript:void(0)" class="js-tag article-tag-list-link color1">muduo</a>
+        		</li>
+      		
+		</ul>
+	</div>
+
+      
+
+      
+        <p class="article-more-link">
+          <a class="article-more-a" href="/2018/09/12/muduo源码学习笔记-2/">展开全文 >></a>
+        </p>
+      
+
+      
+      <div class="clearfix"></div>
+    </div>
+  </div>
+</article>
+
+<aside class="wrap-side-operation">
+    <div class="mod-side-operation">
+        
+        <div class="jump-container" id="js-jump-container" style="display:none;">
+            <a href="javascript:void(0)" class="mod-side-operation__jump-to-top">
+                <i class="icon-font icon-back"></i>
+            </a>
+            <div id="js-jump-plan-container" class="jump-plan-container" style="top: -11px;">
+                <i class="icon-font icon-plane jump-plane"></i>
+            </div>
+        </div>
+        
+        
+    </div>
+</aside>
+
+
+
+
+  
     <article id="post-libevnt源码分析1" class="article article-type-post  article-index" itemscope itemprop="blogPost">
   <div class="article-inner">
     
@@ -761,97 +853,6 @@
       
         <p class="article-more-link">
           <a class="article-more-a" href="/2018/06/10/ftp关键技术三：被动模式和主动模式/">展开全文 >></a>
-        </p>
-      
-
-      
-      <div class="clearfix"></div>
-    </div>
-  </div>
-</article>
-
-<aside class="wrap-side-operation">
-    <div class="mod-side-operation">
-        
-        <div class="jump-container" id="js-jump-container" style="display:none;">
-            <a href="javascript:void(0)" class="mod-side-operation__jump-to-top">
-                <i class="icon-font icon-back"></i>
-            </a>
-            <div id="js-jump-plan-container" class="jump-plan-container" style="top: -11px;">
-                <i class="icon-font icon-plane jump-plane"></i>
-            </div>
-        </div>
-        
-        
-    </div>
-</aside>
-
-
-
-
-  
-    <article id="post-ftp关键技术二-nobody进程创建和使用（一）" class="article article-type-post  article-index" itemscope itemprop="blogPost">
-  <div class="article-inner">
-    
-      <header class="article-header">
-        
-  
-    <h1 itemprop="name">
-      <a class="article-title" href="/2018/05/29/ftp关键技术二-nobody进程创建和使用（一）/">ftp关键技术二:nobody进程创建和使用（一）</a>
-    </h1>
-  
-
-        
-        <a href="/2018/05/29/ftp关键技术二-nobody进程创建和使用（一）/" class="archive-article-date">
-  	<time datetime="2018-05-29T09:40:00.000Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2018-05-29</time>
-</a>
-        
-      </header>
-    
-    <div class="article-entry" itemprop="articleBody">
-      
-        <hr>
-<p>本文将从以下几个方面具体阐述nobody进程的前世今生</p>
-<ul>
-<li><p><strong>为什么需要nobody进程？</strong></p>
-</li>
-<li><p><strong>进程间通信的协议制定</strong></p>
-</li>
-</ul>
-<h4 id="为什么需要nobody进程"><a href="#为什么需要nobody进程" class="headerlink" title="为什么需要nobody进程"></a>为什么需要nobody进程</h4><hr>
-<p><strong>（1）为什么要使用nobody进程和服务进程两个进程？</strong></p>
-<p>​    1.在PORT模式下，服务器会主动建立数据通道连接客户端，服务器可能就没有权限做这种事情，就需要nobody进程来帮忙。 Nobody进程会通过unix域协议（本机通信效率高）  将套接字传递给服务进程。普通用户没有权限绑定20端口，需要nobody进程的协助，所以需要nobody进程作为控制进程。</p>
-<p>​    2.事实上无论是PORT模式还是PASV模式，创建套接字还是后面对套接字的监听这些操作涉及到于内核的相关操作放在服务进程都是不安全。其实最近看到一个文章，文中指出以root启动在验证后转到用户进程也会不安全的。</p>
-<p><strong>（2）为什么使用多进程而不是多线程？</strong></p>
-<p>​    原因是在多线程或IO复用的情况下，当前目录是共享的，无法根据每一个连接来拥有自己的当前目录，也就是说当前用户目录的切换会影响到其他的用户。</p>
-<p><strong>（3）ftp服务器的架构</strong></p>
-<p><img src="photo/miniftp.png" alt="miniftp服务器架构"></p>
-        
-          <a class="article-more-a" href="/2018/05/29/ftp关键技术二-nobody进程创建和使用（一）/#more">more >></a>
-        
-      
-
-      
-    </div>
-    <div class="article-info article-info-index">
-      
-      
-	<div class="article-tag tagcloud">
-		<i class="icon-price-tags icon"></i>
-		<ul class="article-tag-list">
-			 
-        		<li class="article-tag-list-item">
-        			<a href="javascript:void(0)" class="js-tag article-tag-list-link color4">FTP</a>
-        		</li>
-      		
-		</ul>
-	</div>
-
-      
-
-      
-        <p class="article-more-link">
-          <a class="article-more-a" href="/2018/05/29/ftp关键技术二-nobody进程创建和使用（一）/">展开全文 >></a>
         </p>
       
 

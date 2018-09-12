@@ -144,6 +144,97 @@
           <div id="js-content" class="content-ll">
             
   
+    <article id="post-ftp关键技术二-nobody进程创建和使用（一）" class="article article-type-post  article-index" itemscope itemprop="blogPost">
+  <div class="article-inner">
+    
+      <header class="article-header">
+        
+  
+    <h1 itemprop="name">
+      <a class="article-title" href="/2018/05/29/ftp关键技术二-nobody进程创建和使用（一）/">ftp关键技术二:nobody进程创建和使用（一）</a>
+    </h1>
+  
+
+        
+        <a href="/2018/05/29/ftp关键技术二-nobody进程创建和使用（一）/" class="archive-article-date">
+  	<time datetime="2018-05-29T09:40:00.000Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2018-05-29</time>
+</a>
+        
+      </header>
+    
+    <div class="article-entry" itemprop="articleBody">
+      
+        <hr>
+<p>本文将从以下几个方面具体阐述nobody进程的前世今生</p>
+<ul>
+<li><p><strong>为什么需要nobody进程？</strong></p>
+</li>
+<li><p><strong>进程间通信的协议制定</strong></p>
+</li>
+</ul>
+<h4 id="为什么需要nobody进程"><a href="#为什么需要nobody进程" class="headerlink" title="为什么需要nobody进程"></a>为什么需要nobody进程</h4><hr>
+<p><strong>（1）为什么要使用nobody进程和服务进程两个进程？</strong></p>
+<p>​    1.在PORT模式下，服务器会主动建立数据通道连接客户端，服务器可能就没有权限做这种事情，就需要nobody进程来帮忙。 Nobody进程会通过unix域协议（本机通信效率高）  将套接字传递给服务进程。普通用户没有权限绑定20端口，需要nobody进程的协助，所以需要nobody进程作为控制进程。</p>
+<p>​    2.事实上无论是PORT模式还是PASV模式，创建套接字还是后面对套接字的监听这些操作涉及到于内核的相关操作放在服务进程都是不安全。其实最近看到一个文章，文中指出以root启动在验证后转到用户进程也会不安全的。</p>
+<p><strong>（2）为什么使用多进程而不是多线程？</strong></p>
+<p>​    原因是在多线程或IO复用的情况下，当前目录是共享的，无法根据每一个连接来拥有自己的当前目录，也就是说当前用户目录的切换会影响到其他的用户。</p>
+<p><strong>（3）ftp服务器的架构</strong></p>
+<p><img src="photo/miniftp.png" alt="miniftp服务器架构"></p>
+        
+          <a class="article-more-a" href="/2018/05/29/ftp关键技术二-nobody进程创建和使用（一）/#more">more >></a>
+        
+      
+
+      
+    </div>
+    <div class="article-info article-info-index">
+      
+      
+	<div class="article-tag tagcloud">
+		<i class="icon-price-tags icon"></i>
+		<ul class="article-tag-list">
+			 
+        		<li class="article-tag-list-item">
+        			<a href="javascript:void(0)" class="js-tag article-tag-list-link color4">FTP</a>
+        		</li>
+      		
+		</ul>
+	</div>
+
+      
+
+      
+        <p class="article-more-link">
+          <a class="article-more-a" href="/2018/05/29/ftp关键技术二-nobody进程创建和使用（一）/">展开全文 >></a>
+        </p>
+      
+
+      
+      <div class="clearfix"></div>
+    </div>
+  </div>
+</article>
+
+<aside class="wrap-side-operation">
+    <div class="mod-side-operation">
+        
+        <div class="jump-container" id="js-jump-container" style="display:none;">
+            <a href="javascript:void(0)" class="mod-side-operation__jump-to-top">
+                <i class="icon-font icon-back"></i>
+            </a>
+            <div id="js-jump-plan-container" class="jump-plan-container" style="top: -11px;">
+                <i class="icon-font icon-plane jump-plane"></i>
+            </div>
+        </div>
+        
+        
+    </div>
+</aside>
+
+
+
+
+  
     <article id="post-ftp关键技术二-nobody进程创建和使用（二）" class="article article-type-post  article-index" itemscope itemprop="blogPost">
   <div class="article-inner">
     
