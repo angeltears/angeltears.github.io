@@ -406,6 +406,91 @@
 
 
   
+    <article id="post-muduo源码学习笔记-1" class="article article-type-post  article-index" itemscope itemprop="blogPost">
+  <div class="article-inner">
+    
+      <header class="article-header">
+        
+  
+    <h1 itemprop="name">
+      <a class="article-title" href="/2018/09/03/muduo源码学习笔记-1/">muduo源码学习笔记(1)</a>
+    </h1>
+  
+
+        
+        <a href="/2018/09/03/muduo源码学习笔记-1/" class="archive-article-date">
+  	<time datetime="2018-09-03T08:36:00.000Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2018-09-03</time>
+</a>
+        
+      </header>
+    
+    <div class="article-entry" itemprop="articleBody">
+      
+        <p>前言：</p>
+<p>​    对于muduo库，我觉得，光Linux多线程上提到的一些实现，还是不够的，在base/里面，还有/net里面提供了很多不错的实现，值得去学习，暑假算是看看muduo的百分之八十的源码，并对其进行了一次实现，（剩下的在最近总结的时候，也会开始看看，并实现一遍），对于muduo库，简单谈谈自己对其实现的理解。</p>
+<h5 id="用RAII管理你的锁"><a href="#用RAII管理你的锁" class="headerlink" title="用RAII管理你的锁"></a>用RAII管理你的锁</h5><p>​    Posix Thread内定义的一系列的mutex函数，但是是基于C语言的，用起来很不方便，需要不断地初始化，销毁p，我们要对其进行一定程度的封装，使得我们不必重复的写初始话，销毁操作，专注在使用上。</p>
+<p>​    muduo对锁进行了封装，分别是Mutex、MutexGruad、Condition、CountDownLatch。</p>
+<h5 id="Mutex的实现"><a href="#Mutex的实现" class="headerlink" title="Mutex的实现"></a>Mutex的实现</h5><figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br></pre></td><td class="code"><pre><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">MutexLock</span> :</span> boost::noncopyable</span><br><span class="line">  &#123;</span><br><span class="line">  <span class="keyword">public</span>:</span><br><span class="line">      MutexLock():holder_(<span class="number">0</span>)</span><br><span class="line">      &#123;</span><br><span class="line">          MCHECK(pthread_mutex_init(&amp;mutex_, <span class="literal">NULL</span>));</span><br><span class="line">      &#125;</span><br><span class="line">      ~MutexLock()</span><br><span class="line">      &#123;</span><br><span class="line">          assert(holder_ == <span class="number">0</span>);</span><br><span class="line">          MCHECK(pthread_mutex_destroy(&amp;mutex_));</span><br><span class="line">      &#125;</span><br><span class="line">      <span class="function"><span class="keyword">bool</span> <span class="title">isLocketByThisThread</span><span class="params">()</span> <span class="keyword">const</span></span></span><br><span class="line"><span class="function">      </span>&#123;</span><br><span class="line">          <span class="keyword">return</span> holder_ == CurrentThread::tid();</span><br><span class="line">      &#125;</span><br><span class="line">      <span class="function"><span class="keyword">void</span> <span class="title">assertLocked</span><span class="params">()</span> <span class="keyword">const</span></span></span><br><span class="line"><span class="function">      </span>&#123;</span><br><span class="line">          assert(isLocketByThisThread());</span><br><span class="line">      &#125;</span><br><span class="line">      <span class="function"><span class="keyword">void</span> <span class="title">lock</span><span class="params">()</span></span></span><br><span class="line"><span class="function">      </span>&#123;</span><br><span class="line">          MCHECK(pthread_mutex_lock(&amp;mutex_));</span><br><span class="line">          assignHolder();</span><br><span class="line">      &#125;</span><br><span class="line">      <span class="function"><span class="keyword">void</span> <span class="title">unlock</span><span class="params">()</span></span></span><br><span class="line"><span class="function">      </span>&#123;</span><br><span class="line">          unassignHolder();</span><br><span class="line">          MCHECK(pthread_mutex_unlock(&amp;mutex_));</span><br><span class="line">      &#125;</span><br><span class="line">      <span class="keyword">pthread_mutex_t</span>* getPthreadMutex() <span class="comment">/* non-const */</span>　　　</span><br><span class="line">      &#123;</span><br><span class="line">          <span class="keyword">return</span> &amp;mutex_;</span><br><span class="line">      &#125;</span><br><span class="line">      <span class="keyword">private</span>:</span><br><span class="line">      <span class="function"><span class="keyword">void</span> <span class="title">unassignHolder</span><span class="params">()</span></span></span><br><span class="line"><span class="function">      </span>&#123;</span><br><span class="line">          holder_ = <span class="number">0</span>;</span><br><span class="line">      &#125;</span><br><span class="line">      <span class="function"><span class="keyword">void</span> <span class="title">assignHolder</span><span class="params">()</span></span></span><br><span class="line"><span class="function">      </span>&#123;</span><br><span class="line">          holder_ = CurrentThread::tid();</span><br><span class="line">      &#125;</span><br><span class="line">  <span class="keyword">private</span>:</span><br><span class="line">      <span class="keyword">pthread_mutex_t</span>  mutex_;</span><br><span class="line">      <span class="keyword">pid_t</span> holder_;       <span class="comment">// 如果不是同一个线程的加锁和解锁则会失败</span></span><br><span class="line">  &#125;;</span><br></pre></td></tr></table></figure>
+<p>如果单单只是这样实现mutex，还是太过于麻烦，而且这个锁，我们只能在函数内自动获取自动产生，然后自动析构，会有一定的性能损失。</p>
+        
+          <a class="article-more-a" href="/2018/09/03/muduo源码学习笔记-1/#more">more >></a>
+        
+      
+
+      
+    </div>
+    <div class="article-info article-info-index">
+      
+      
+	<div class="article-tag tagcloud">
+		<i class="icon-price-tags icon"></i>
+		<ul class="article-tag-list">
+			 
+        		<li class="article-tag-list-item">
+        			<a href="javascript:void(0)" class="js-tag article-tag-list-link color4">多线程</a>
+        		</li>
+      		 
+        		<li class="article-tag-list-item">
+        			<a href="javascript:void(0)" class="js-tag article-tag-list-link color1">muduo</a>
+        		</li>
+      		
+		</ul>
+	</div>
+
+      
+
+      
+        <p class="article-more-link">
+          <a class="article-more-a" href="/2018/09/03/muduo源码学习笔记-1/">展开全文 >></a>
+        </p>
+      
+
+      
+      <div class="clearfix"></div>
+    </div>
+  </div>
+</article>
+
+<aside class="wrap-side-operation">
+    <div class="mod-side-operation">
+        
+        <div class="jump-container" id="js-jump-container" style="display:none;">
+            <a href="javascript:void(0)" class="mod-side-operation__jump-to-top">
+                <i class="icon-font icon-back"></i>
+            </a>
+            <div id="js-jump-plan-container" class="jump-plan-container" style="top: -11px;">
+                <i class="icon-font icon-plane jump-plane"></i>
+            </div>
+        </div>
+        
+        
+    </div>
+</aside>
+
+
+
+
+  
     <article id="post-漫谈io复用和高性能服务框架" class="article article-type-post  article-index" itemscope itemprop="blogPost">
   <div class="article-inner">
     
@@ -461,93 +546,6 @@
       
         <p class="article-more-link">
           <a class="article-more-a" href="/2018/07/26/漫谈io复用和高性能服务框架/">展开全文 >></a>
-        </p>
-      
-
-      
-      <div class="clearfix"></div>
-    </div>
-  </div>
-</article>
-
-<aside class="wrap-side-operation">
-    <div class="mod-side-operation">
-        
-        <div class="jump-container" id="js-jump-container" style="display:none;">
-            <a href="javascript:void(0)" class="mod-side-operation__jump-to-top">
-                <i class="icon-font icon-back"></i>
-            </a>
-            <div id="js-jump-plan-container" class="jump-plan-container" style="top: -11px;">
-                <i class="icon-font icon-plane jump-plane"></i>
-            </div>
-        </div>
-        
-        
-    </div>
-</aside>
-
-
-
-
-  
-    <article id="post-muduo源码学习笔记-1" class="article article-type-post  article-index" itemscope itemprop="blogPost">
-  <div class="article-inner">
-    
-      <header class="article-header">
-        
-  
-    <h1 itemprop="name">
-      <a class="article-title" href="/2018/07/20/muduo源码学习笔记-1/">muduo源码学习笔记(1)</a>
-    </h1>
-  
-
-        
-        <a href="/2018/07/20/muduo源码学习笔记-1/" class="archive-article-date">
-  	<time datetime="2018-07-20T10:36:00.000Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2018-07-20</time>
-</a>
-        
-      </header>
-    
-    <div class="article-entry" itemprop="articleBody">
-      
-        <p>前言：</p>
-<p>​    对于muduo库，我觉得，光Linux多线程上提到的一些实现，还是不够的，在base/里面，还有/net里面提供了很多不错的实现，值得去学习，暑假算是看看muduo的百分之八十的源码，并对其进行了一次实现，（剩下的在最近总结的时候，也会开始看看，并实现一遍），对于muduo库，简单谈谈自己对其实现的理解。</p>
-<p>#####用RAII管理你的锁</p>
-<p>​    Posix Thread内定义的一系列的mutex函数，但是是基于C语言的，用起来很不方便，需要不断地初始化，销毁p，我们要对其进行一定程度的封装，使得我们不必重复的写初始话，销毁操作，专注在使用上。</p>
-<p>​    muduo对锁进行了封装，分别是Mutex、MutexGruad、Condition、CountDownLatch。</p>
-<p>#####Mutex的实现</p>
-<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br></pre></td><td class="code"><pre><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">MutexLock</span> :</span> boost::noncopyable</span><br><span class="line">  &#123;</span><br><span class="line">  <span class="keyword">public</span>:</span><br><span class="line">      MutexLock():holder_(<span class="number">0</span>)</span><br><span class="line">      &#123;</span><br><span class="line">          MCHECK(pthread_mutex_init(&amp;mutex_, <span class="literal">NULL</span>));</span><br><span class="line">      &#125;</span><br><span class="line">      ~MutexLock()</span><br><span class="line">      &#123;</span><br><span class="line">          assert(holder_ == <span class="number">0</span>);</span><br><span class="line">          MCHECK(pthread_mutex_destroy(&amp;mutex_));</span><br><span class="line">      &#125;</span><br><span class="line">      <span class="function"><span class="keyword">bool</span> <span class="title">isLocketByThisThread</span><span class="params">()</span> <span class="keyword">const</span></span></span><br><span class="line"><span class="function">      </span>&#123;</span><br><span class="line">          <span class="keyword">return</span> holder_ == CurrentThread::tid();</span><br><span class="line">      &#125;</span><br><span class="line">      <span class="function"><span class="keyword">void</span> <span class="title">assertLocked</span><span class="params">()</span> <span class="keyword">const</span></span></span><br><span class="line"><span class="function">      </span>&#123;</span><br><span class="line">          assert(isLocketByThisThread());</span><br><span class="line">      &#125;</span><br><span class="line">      <span class="function"><span class="keyword">void</span> <span class="title">lock</span><span class="params">()</span></span></span><br><span class="line"><span class="function">      </span>&#123;</span><br><span class="line">          MCHECK(pthread_mutex_lock(&amp;mutex_));</span><br><span class="line">          assignHolder();</span><br><span class="line">      &#125;</span><br><span class="line">      <span class="function"><span class="keyword">void</span> <span class="title">unlock</span><span class="params">()</span></span></span><br><span class="line"><span class="function">      </span>&#123;</span><br><span class="line">          unassignHolder();</span><br><span class="line">          MCHECK(pthread_mutex_unlock(&amp;mutex_));</span><br><span class="line">      &#125;</span><br><span class="line">      <span class="keyword">pthread_mutex_t</span>* getPthreadMutex() <span class="comment">/* non-const */</span>　　　</span><br><span class="line">      &#123;</span><br><span class="line">          <span class="keyword">return</span> &amp;mutex_;</span><br><span class="line">      &#125;</span><br><span class="line">      <span class="keyword">private</span>:</span><br><span class="line">      <span class="function"><span class="keyword">void</span> <span class="title">unassignHolder</span><span class="params">()</span></span></span><br><span class="line"><span class="function">      </span>&#123;</span><br><span class="line">          holder_ = <span class="number">0</span>;</span><br><span class="line">      &#125;</span><br><span class="line">      <span class="function"><span class="keyword">void</span> <span class="title">assignHolder</span><span class="params">()</span></span></span><br><span class="line"><span class="function">      </span>&#123;</span><br><span class="line">          holder_ = CurrentThread::tid();</span><br><span class="line">      &#125;</span><br><span class="line">  <span class="keyword">private</span>:</span><br><span class="line">      <span class="keyword">pthread_mutex_t</span>  mutex_;</span><br><span class="line">      <span class="keyword">pid_t</span> holder_;       <span class="comment">// 如果不是同一个线程的加锁和解锁则会失败</span></span><br><span class="line">  &#125;;</span><br></pre></td></tr></table></figure>
-<p>如果单单只是这样实现mutex，还是太过于麻烦，而且这个锁，我们只能在函数内自动获取自动产生，然后自动析构，会有一定的性能损失。</p>
-        
-          <a class="article-more-a" href="/2018/07/20/muduo源码学习笔记-1/#more">more >></a>
-        
-      
-
-      
-    </div>
-    <div class="article-info article-info-index">
-      
-      
-	<div class="article-tag tagcloud">
-		<i class="icon-price-tags icon"></i>
-		<ul class="article-tag-list">
-			 
-        		<li class="article-tag-list-item">
-        			<a href="javascript:void(0)" class="js-tag article-tag-list-link color4">多线程</a>
-        		</li>
-      		 
-        		<li class="article-tag-list-item">
-        			<a href="javascript:void(0)" class="js-tag article-tag-list-link color1">muduo</a>
-        		</li>
-      		
-		</ul>
-	</div>
-
-      
-
-      
-        <p class="article-more-link">
-          <a class="article-more-a" href="/2018/07/20/muduo源码学习笔记-1/">展开全文 >></a>
         </p>
       
 
