@@ -6,19 +6,20 @@
   <meta name="renderer" content="webkit">
   <meta http-equiv="X-UA-Compatible" content="IE=edge" >
   <link rel="dns-prefetch" href="https://justsolitude.com">
-  <title>Solitude</title>
+  <title>libevent源码分析(2) | Solitude</title>
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
-  <meta name="description" content="西邮16级学生，爱好游戏，致力于研究服务端开发各种技术，能力有限，此为博客一枚">
-<meta name="keywords" content="后端,c++,linuxer,多线程,高并发,开发者,程序猿,,极客,编程,代码,开源,IT网站,Developer,Programmer,Coder">
-<meta property="og:type" content="website">
-<meta property="og:title" content="Solitude">
-<meta property="og:url" content="https://justsolitude.com/index.html">
+  <meta name="description" content="写在前面： ​    这个源码是分析libevent-2.0.20-stable, 并非最新版本的libevent，作者并没有全看源码，在这里会推荐以下参考的一些网站，也欢迎大家在不足的地方提出来进行讨论。 ​    libevent源码分析 ​    libevent深度剖析１ ​    libevent深度剖析２ 什么都没包装的内存管理​    默认情况下,libevent 使用 C 库的内存">
+<meta name="keywords" content="libevent">
+<meta property="og:type" content="article">
+<meta property="og:title" content="libevent源码分析(2)">
+<meta property="og:url" content="https://justsolitude.com/2018/09/13/libevnt源码分析2/index.html">
 <meta property="og:site_name" content="Solitude">
-<meta property="og:description" content="西邮16级学生，爱好游戏，致力于研究服务端开发各种技术，能力有限，此为博客一枚">
+<meta property="og:description" content="写在前面： ​    这个源码是分析libevent-2.0.20-stable, 并非最新版本的libevent，作者并没有全看源码，在这里会推荐以下参考的一些网站，也欢迎大家在不足的地方提出来进行讨论。 ​    libevent源码分析 ​    libevent深度剖析１ ​    libevent深度剖析２ 什么都没包装的内存管理​    默认情况下,libevent 使用 C 库的内存">
 <meta property="og:locale" content="default">
+<meta property="og:updated_time" content="2018-09-13T11:09:47.205Z">
 <meta name="twitter:card" content="summary">
-<meta name="twitter:title" content="Solitude">
-<meta name="twitter:description" content="西邮16级学生，爱好游戏，致力于研究服务端开发各种技术，能力有限，此为博客一枚">
+<meta name="twitter:title" content="libevent源码分析(2)">
+<meta name="twitter:description" content="写在前面： ​    这个源码是分析libevent-2.0.20-stable, 并非最新版本的libevent，作者并没有全看源码，在这里会推荐以下参考的一些网站，也欢迎大家在不足的地方提出来进行讨论。 ​    libevent源码分析 ​    libevent深度剖析１ ​    libevent深度剖析２ 什么都没包装的内存管理​    默认情况下,libevent 使用 C 库的内存">
   
     <link rel="alternative" href="/atom.xml" title="Solitude" type="application/atom+xml">
   
@@ -142,16 +143,14 @@
             <canvas data-colors="#eaeaea" data-sectionHeight="100" data-contentId="js-content" id="myCanvas1" class="anm-canvas"></canvas>
           </div>
           <div id="js-content" class="content-ll">
-            
-  
-    <article id="post-libevnt源码分析2" class="article article-type-post  article-index" itemscope itemprop="blogPost">
+            <article id="post-libevnt源码分析2" class="article article-type-post " itemscope itemprop="blogPost">
   <div class="article-inner">
     
       <header class="article-header">
         
   
-    <h1 itemprop="name">
-      <a class="article-title" href="/2018/09/13/libevnt源码分析2/">libevent源码分析(2)</a>
+    <h1 class="article-title" itemprop="name">
+      libevent源码分析(2)
     </h1>
   
 
@@ -197,200 +196,26 @@
       
 
       
-    </div>
-    <div class="article-info article-info-index">
-      
-      
-	<div class="article-tag tagcloud">
-		<i class="icon-price-tags icon"></i>
-		<ul class="article-tag-list">
-			 
-        		<li class="article-tag-list-item">
-        			<a href="javascript:void(0)" class="js-tag article-tag-list-link color4">libevent</a>
-        		</li>
-      		
-		</ul>
-	</div>
-
-      
-
-      
-        <p class="article-more-link">
-          <a class="article-more-a" href="/2018/09/13/libevnt源码分析2/">展开全文 >></a>
-        </p>
-      
-
-      
-      <div class="clearfix"></div>
-    </div>
-  </div>
-</article>
-
-<aside class="wrap-side-operation">
-    <div class="mod-side-operation">
-        
-        <div class="jump-container" id="js-jump-container" style="display:none;">
-            <a href="javascript:void(0)" class="mod-side-operation__jump-to-top">
-                <i class="icon-font icon-back"></i>
-            </a>
-            <div id="js-jump-plan-container" class="jump-plan-container" style="top: -11px;">
-                <i class="icon-font icon-plane jump-plane"></i>
-            </div>
+        <div class="page-reward">
+          <a href="javascript:;" class="page-reward-btn tooltip-top">
+            <div class="tooltip tooltip-east">
+            <span class="tooltip-item">
+              赏
+            </span>
+            <span class="tooltip-content">
+              <span class="tooltip-text">
+                <span class="tooltip-inner">
+                  <p class="reward-p"><i class="icon icon-quo-left"></i>谢谢你请我吃糖果<i class="icon icon-quo-right"></i></p>
+                  <div class="reward-box">
+                    
+                    
+                  </div>
+                </span>
+              </span>
+            </span>
+          </div>
+          </a>
         </div>
-        
-        
-    </div>
-</aside>
-
-
-
-
-  
-    <article id="post-muduo源码学习笔记-2" class="article article-type-post  article-index" itemscope itemprop="blogPost">
-  <div class="article-inner">
-    
-      <header class="article-header">
-        
-  
-    <h1 itemprop="name">
-      <a class="article-title" href="/2018/09/12/muduo源码学习笔记-2/">muduo源码学习笔记(2)</a>
-    </h1>
-  
-
-        
-        <a href="/2018/09/12/muduo源码学习笔记-2/" class="archive-article-date">
-  	<time datetime="2018-09-12T10:36:00.000Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2018-09-12</time>
-</a>
-        
-      </header>
-    
-    <div class="article-entry" itemprop="articleBody">
-      
-        <p>前言：</p>
-<p>​    对于muduo库，我觉得，光Linux多线程上提到的一些实现，还是不够的，在base/里面，还有/net里面提供了很多不错的实现，值得去学习，暑假算是看看muduo的百分之八十的源码，并对其进行了一次实现，（剩下的在最近总结的时候，也会开始看看，并实现一遍），对于muduo库，简单谈谈自己对其实现的理解。</p>
-<h5 id="日志缓存流LogStream"><a href="#日志缓存流LogStream" class="headerlink" title="日志缓存流LogStream"></a>日志缓存流LogStream</h5><p>​    在muduo实现的基础日志类，一共用来三个文件，LogFilem, LogStream,Loggin。本着自底向上原则，我们从底层的实现慢慢讲起。</p>
-<p>​    在LogStream中，定义了三个类，两个底层的类分别是FixedBuffer和Fmt。</p>
-<p>​    muduo在实现写日志的时候，并没有直接写向stderr或者IO流，而是会写入自己定义的FixedBuffer(缓冲流中)，下面就让我们看看缓冲流的定义和实现吧!</p>
-<p><img src="/photo/FixedBuffer.png" alt="FixedBuffer类图"></p>
-<p>​    FixedBuffer定义在namespace detail算是用户不可见,在创建FixedBuffer的时候可以向其输出大小来控制内部的buf的大小，也定义两个常量分别对应大小buf</p>
-<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">const</span> <span class="keyword">int</span> kSmallBuffer = <span class="number">4000</span>;</span><br><span class="line"><span class="keyword">const</span> <span class="keyword">int</span> kLargeBuffer = <span class="number">4000</span> * <span class="number">1024</span>;</span><br></pre></td></tr></table></figure>
-<p>​    一共有三个成员，data_就是缓存的数据，cur_指向缓存数据的末尾的下一个和cookie_指针</p>
-<p>​    我们需要重点关注以下函数</p>
-<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line">　<span class="comment">//追加字符串  </span></span><br><span class="line">　<span class="function"><span class="keyword">void</span> <span class="title">append</span><span class="params">(<span class="keyword">const</span> <span class="keyword">char</span>* <span class="comment">/*restrict*/</span> buf, <span class="keyword">size_t</span> len)</span></span></span><br><span class="line"><span class="function"> </span>&#123;</span><br><span class="line">   <span class="comment">// <span class="doctag">FIXME:</span> append partially</span></span><br><span class="line"><span class="keyword">if</span> (implicit_cast&lt;<span class="keyword">size_t</span>&gt;(avail()) &gt; len)</span><br><span class="line">   &#123;</span><br><span class="line">     <span class="built_in">memcpy</span>(cur_, buf, len);</span><br><span class="line">     cur_ += len;</span><br><span class="line">   &#125;</span><br><span class="line"> &#125;</span><br><span class="line">　<span class="comment">//设置缓存</span></span><br><span class="line"> void setCookie(void (*cookie)())</span><br><span class="line"> &#123; cookie_ = cookie; &#125;;</span><br></pre></td></tr></table></figure>
-<p>​    值得注意的是下面在实现转化的时候在detail中定义了</p>
-<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">const</span> <span class="keyword">char</span> digits[] = <span class="string">"9876543210123456789"</span>;</span><br><span class="line"><span class="keyword">const</span> <span class="keyword">char</span>* zero = digits + <span class="number">9</span>;</span><br><span class="line">BOOST_STATIC_ASSERT(<span class="keyword">sizeof</span>(digits) == <span class="number">20</span>);</span><br><span class="line"></span><br><span class="line"><span class="keyword">const</span> <span class="keyword">char</span> digitsHex[] = <span class="string">"0123456789ABCDEF"</span>;</span><br><span class="line">BOOST_STATIC_ASSERT(<span class="keyword">sizeof</span> digitsHex == <span class="number">17</span>);</span><br><span class="line"></span><br><span class="line"><span class="comment">// 先用求余除法求出　value转化成字符串的倒着顺序的，然后用std::reverse对其进行倒转</span></span><br><span class="line"><span class="comment">//　另一方面用了取数的方法，相比直接申请赋值会更有效率一些</span></span><br><span class="line"><span class="keyword">template</span>&lt;<span class="keyword">typename</span> T&gt;</span><br><span class="line"><span class="keyword">size_t</span> convert(<span class="keyword">char</span> buf[], T value)</span><br><span class="line">&#123;</span><br><span class="line">  T i = value;</span><br><span class="line">  <span class="keyword">char</span>* p = buf;</span><br><span class="line"></span><br><span class="line">  <span class="keyword">do</span></span><br><span class="line">  &#123;</span><br><span class="line">    <span class="keyword">int</span> lsd = <span class="keyword">static_cast</span>&lt;<span class="keyword">int</span>&gt;(i % <span class="number">10</span>);</span><br><span class="line">    i /= <span class="number">10</span>;</span><br><span class="line">    *p++ = zero[lsd];</span><br><span class="line">  &#125; <span class="keyword">while</span> (i != <span class="number">0</span>);</span><br><span class="line"></span><br><span class="line">  <span class="keyword">if</span> (value &lt; <span class="number">0</span>)</span><br><span class="line">  &#123;</span><br><span class="line">    *p++ = <span class="string">'-'</span>;</span><br><span class="line">  &#125;</span><br><span class="line">  *p = <span class="string">'\0'</span>;</span><br><span class="line">  <span class="built_in">std</span>::reverse(buf, p);      </span><br><span class="line"></span><br><span class="line">  <span class="keyword">return</span> p - buf;</span><br><span class="line">&#125;</span><br><span class="line"><span class="comment">/// 同样的实现不过是１６进制的而已</span></span><br><span class="line"><span class="keyword">size_t</span> convertHex(<span class="keyword">char</span> buf[], <span class="keyword">uintptr_t</span> value)；</span><br></pre></td></tr></table></figure>
-        
-          <a class="article-more-a" href="/2018/09/12/muduo源码学习笔记-2/#more">more >></a>
-        
-      
-
-      
-    </div>
-    <div class="article-info article-info-index">
-      
-      
-	<div class="article-tag tagcloud">
-		<i class="icon-price-tags icon"></i>
-		<ul class="article-tag-list">
-			 
-        		<li class="article-tag-list-item">
-        			<a href="javascript:void(0)" class="js-tag article-tag-list-link color4">多线程</a>
-        		</li>
-      		 
-        		<li class="article-tag-list-item">
-        			<a href="javascript:void(0)" class="js-tag article-tag-list-link color1">muduo</a>
-        		</li>
-      		
-		</ul>
-	</div>
-
-      
-
-      
-        <p class="article-more-link">
-          <a class="article-more-a" href="/2018/09/12/muduo源码学习笔记-2/">展开全文 >></a>
-        </p>
-      
-
-      
-      <div class="clearfix"></div>
-    </div>
-  </div>
-</article>
-
-<aside class="wrap-side-operation">
-    <div class="mod-side-operation">
-        
-        <div class="jump-container" id="js-jump-container" style="display:none;">
-            <a href="javascript:void(0)" class="mod-side-operation__jump-to-top">
-                <i class="icon-font icon-back"></i>
-            </a>
-            <div id="js-jump-plan-container" class="jump-plan-container" style="top: -11px;">
-                <i class="icon-font icon-plane jump-plane"></i>
-            </div>
-        </div>
-        
-        
-    </div>
-</aside>
-
-
-
-
-  
-    <article id="post-libevnt源码分析1" class="article article-type-post  article-index" itemscope itemprop="blogPost">
-  <div class="article-inner">
-    
-      <header class="article-header">
-        
-  
-    <h1 itemprop="name">
-      <a class="article-title" href="/2018/09/11/libevnt源码分析1/">libevent源码分析(1)</a>
-    </h1>
-  
-
-        
-        <a href="/2018/09/11/libevnt源码分析1/" class="archive-article-date">
-  	<time datetime="2018-09-11T11:00:00.000Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2018-09-11</time>
-</a>
-        
-      </header>
-    
-    <div class="article-entry" itemprop="articleBody">
-      
-        <p>写在前面：</p>
-<p>​    这个源码是分析libevent-2.0.20-stable, 并非最新版本的libevent，作者并没有全看源码，在这里会推荐以下参考的一些网站，也欢迎大家在不足的地方提出来进行讨论。</p>
-<p>​    <a href="https://blog.csdn.net/luotuo44/article/list/3" target="_blank" rel="noopener">libevent源码分析</a></p>
-<p>​    <a href="https://blog.csdn.net/jcjx0315/article/details/79693484" target="_blank" rel="noopener">libevent深度剖析１</a></p>
-<p>​    <a href="https://blog.csdn.net/sparkliang/article/details/4957667" target="_blank" rel="noopener">libevent深度剖析２</a></p>
-<p>在event2/event.h中定义了错误类型和错误的回调函数</p>
-<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="meta-keyword">define</span> EVENT_LOG_DEBUG 0</span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">define</span> EVENT_LOG_MSG   1</span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">define</span> EVENT_LOG_WARN  2</span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">define</span> EVENT_LOG_ERR   3</span></span><br><span class="line"></span><br><span class="line"><span class="meta">#<span class="meta-keyword">define</span> _EVENT_LOG_DEBUG EVENT_LOG_DEBUG</span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">define</span> _EVENT_LOG_MSG EVENT_LOG_MSG</span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">define</span> _EVENT_LOG_WARN EVENT_LOG_WARN</span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">define</span> _EVENT_LOG_ERR EVENT_LOG_ERR</span></span><br><span class="line"></span><br><span class="line"><span class="comment">// 日志回调函数的格式和日志定制函数</span></span><br><span class="line"><span class="function"><span class="keyword">typedef</span> <span class="title">void</span> <span class="params">(*event_log_cb)</span><span class="params">(<span class="keyword">int</span> severity, <span class="keyword">const</span> <span class="keyword">char</span> *msg)</span></span>;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">void</span> <span class="title">event_set_log_callback</span><span class="params">(event_log_cb cb)</span></span>;　</span><br><span class="line"></span><br><span class="line"><span class="comment">// 出错回调函数的格式和错误定制函数</span></span><br><span class="line"><span class="function"><span class="keyword">typedef</span> <span class="title">void</span> <span class="params">(*event_fatal_cb)</span><span class="params">(<span class="keyword">int</span> err)</span></span>;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">void</span> <span class="title">event_set_fatal_callback</span><span class="params">(event_fatal_cb cb)</span></span>;</span><br></pre></td></tr></table></figure>
-<p>在实现上，在log.c中，定义了两个全局的静态变量和设置两个静态变量的回调函数</p>
-<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">static</span> event_fatal_cb fatal_fn = <span class="literal">NULL</span>;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">void</span>　<span class="title">event_set_fatal_callback</span><span class="params">(event_fatal_cb cb)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">	fatal_fn = cb;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">static</span> event_log_cb log_fn = <span class="literal">NULL</span>;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">void</span>　<span class="title">event_set_log_callback</span><span class="params">(event_log_cb cb)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">	log_fn = cb;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<pre><code>从event_set_log_callback的实现代码可以看到，并没有对这个参数cb做任何检查。
-</code></pre><p>​    Libevent的默认日志处理函数event_log函数和错误处理函数还是很简陋的，前者只是简单判断错误类型，后者只是简单地根据参数判断日志记录的级别，然后把级别和日志内容输出。    </p>
-<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">static</span> <span class="keyword">void</span>　<span class="title">event_exit</span><span class="params">(<span class="keyword">int</span> errcode)</span>   </span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">	<span class="keyword">if</span> (fatal_fn) &#123;　　　  　　<span class="comment">//如果错误出错函数被定义</span></span><br><span class="line">		fatal_fn(errcode);　　<span class="comment">//执行用户的出错函数,但是并不能让服务器不退出！</span></span><br><span class="line">		<span class="built_in">exit</span>(errcode); <span class="comment">/* should never be reached */</span></span><br><span class="line">	&#125; <span class="keyword">else</span> <span class="keyword">if</span> (errcode == _EVENT_ERR_ABORT)</span><br><span class="line">		<span class="built_in">abort</span>();</span><br><span class="line">	<span class="keyword">else</span></span><br><span class="line">		<span class="built_in">exit</span>(errcode);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">static</span> <span class="keyword">void</span> <span class="title">event_log</span><span class="params">(<span class="keyword">int</span> severity, <span class="keyword">const</span> <span class="keyword">char</span> *msg)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">	<span class="keyword">if</span> (log_fn)     <span class="comment">//定义了自己的出错处理函数　</span></span><br><span class="line">		log_fn(severity, msg);　　<span class="comment">//调用自己的出错函数</span></span><br><span class="line">	<span class="keyword">else</span> </span><br><span class="line">    &#123;</span><br><span class="line">		<span class="keyword">const</span> <span class="keyword">char</span> *severity_str;</span><br><span class="line">		<span class="keyword">switch</span> (severity)</span><br><span class="line">        &#123;</span><br><span class="line">		<span class="keyword">case</span> _EVENT_LOG_DEBUG:</span><br><span class="line">			severity_str = <span class="string">"debug"</span>;</span><br><span class="line">			<span class="keyword">break</span>;</span><br><span class="line">		<span class="keyword">case</span> _EVENT_LOG_MSG:</span><br><span class="line">			severity_str = <span class="string">"msg"</span>;</span><br><span class="line">			<span class="keyword">break</span>;</span><br><span class="line">		<span class="keyword">case</span> _EVENT_LOG_WARN:</span><br><span class="line">			severity_str = <span class="string">"warn"</span>;</span><br><span class="line">			<span class="keyword">break</span>;</span><br><span class="line">		<span class="keyword">case</span> _EVENT_LOG_ERR:</span><br><span class="line">			severity_str = <span class="string">"err"</span>;</span><br><span class="line">			<span class="keyword">break</span>;</span><br><span class="line">		<span class="keyword">default</span>:</span><br><span class="line">			severity_str = <span class="string">"???"</span>;</span><br><span class="line">			<span class="keyword">break</span>;</span><br><span class="line">		&#125;</span><br><span class="line">		(<span class="keyword">void</span>)<span class="built_in">fprintf</span>(<span class="built_in">stderr</span>, <span class="string">"[%s] %s\n"</span>, severity_str, msg);　　　</span><br><span class="line">            <span class="comment">//　仅仅把错误输出到stderr</span></span><br><span class="line">        	<span class="comment">//　fixme: 可以加上时间、文件名、行号和函数名</span></span><br><span class="line">	&#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<p>#####日志API以及日志消息处理流程：</p>
-<p>​    在将日志处理函数API之前，我们需要先了解两个宏的用法</p>
-<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="meta-keyword">define</span> EV_CHECK_FMT(a,b) __attribute__((format(printf, a, b)))</span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">define</span> EV_NORETURN __attribute__((noreturn))</span></span><br></pre></td></tr></table></figure>
-<p>​    第一个宏，口说无凭，我们先做个小小test，来看看这个宏的作用</p>
-<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// 仿照日志处理api的方法定义了一个</span></span><br><span class="line">extern void myprint(const char *format,...) __attribute__((format(printf,1,2)));</span><br><span class="line"><span class="function"><span class="keyword">void</span> <span class="title">myprint</span><span class="params">(<span class="keyword">const</span> <span class="keyword">char</span>* format, ...)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    va_list ap;</span><br><span class="line">    va_start(ap, format);</span><br><span class="line">    <span class="keyword">char</span> buf[<span class="number">1024</span>];</span><br><span class="line">    <span class="built_in">memset</span>(buf, <span class="number">0</span> , <span class="keyword">sizeof</span>(buf));</span><br><span class="line">    vsnprintf(buf, <span class="number">1023</span>, format, ap);</span><br><span class="line">    (<span class="keyword">void</span>)<span class="built_in">printf</span>(<span class="string">"%s"</span>,buf);</span><br><span class="line">    va_end(ap);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">main</span><span class="params">()</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    myprint(<span class="string">"i=%d/n"</span>,<span class="number">6</span>);</span><br><span class="line">    myprint(<span class="string">"i=%s/n"</span>,<span class="number">6</span>);</span><br><span class="line">    myprint(<span class="string">"i=%s/n"</span>,<span class="string">"abc"</span>);</span><br><span class="line">    myprint(<span class="string">"%s,%d,%d/n"</span>,<span class="number">1</span>,<span class="number">2</span>);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<p>​    编译结果</p>
-<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"> warning: format ‘%s’ expects argument of type ‘<span class="keyword">char</span>*’, but argument <span class="number">2</span> has type ‘<span class="keyword">int</span>’ [-Wformat=]</span><br><span class="line">     myprint(<span class="string">"i=%s/n"</span>,<span class="number">6</span>);</span><br><span class="line">                       ^</span><br><span class="line"> warning: format ‘%s’ expects argument of type ‘<span class="keyword">char</span>*’, but argument <span class="number">2</span> has type ‘<span class="keyword">int</span>’ [-Wformat=]</span><br><span class="line">     myprint(<span class="string">"%s,%d,%d/n"</span>,<span class="number">1</span>,<span class="number">2</span>);</span><br><span class="line">                             ^</span><br><span class="line">warning: format ‘%d’ expects a matching ‘<span class="keyword">int</span>’ argument [-Wformat=]</span><br></pre></td></tr></table></figure>
-<p>​    format属性可以给被声明的函数加上类似printf或者scanf的特征，它可以使编译器检查函数声明和函数实际调用参数之间的格式化字符串是否匹配。</p>
-<p>​    format (archetype, string-index, first-to-check) 第一参数需要传递“archetype”指定是哪种风格,这里是 NSString；“string-index”指定传入函数的第几个参数是格式化字符串；“first-to-check”指定第一个可变参数所在的索引.</p>
-<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><span class="line"></span><br><span class="line"><span class="comment">//void __attribute__((noreturn)) onExit();</span></span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">void</span> <span class="title">onExit</span><span class="params">()</span></span></span><br><span class="line"><span class="function"></span>&#123;&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">test</span><span class="params">(<span class="keyword">int</span> state)</span> </span>&#123;</span><br><span class="line">    <span class="keyword">if</span> (state == <span class="number">1</span>) &#123;</span><br><span class="line">        onExit();</span><br><span class="line">    &#125;<span class="keyword">else</span> &#123;</span><br><span class="line">        <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">main</span><span class="params">()</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    test(<span class="number">1</span>);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<p>​    当注释取消的时候，编译时候，会出现一条警告‘noreturn’ function does return。</p>
-<p>​    作用:定义有返回值的函数时，而实际情况有可能没有返回值，此时编译器会报错。</p>
-<p>​    在log-internal.h中定义了一系列日志处理函数API</p>
-<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">void</span> <span class="title">event_err</span><span class="params">(<span class="keyword">int</span> eval, <span class="keyword">const</span> <span class="keyword">char</span> *fmt, ...)</span> <span class="title">EV_CHECK_FMT</span><span class="params">(<span class="number">2</span>,<span class="number">3</span>)</span> EV_NORETURN</span>;</span><br><span class="line"><span class="function"><span class="keyword">void</span> <span class="title">event_warn</span><span class="params">(<span class="keyword">const</span> <span class="keyword">char</span> *fmt, ...)</span> <span class="title">EV_CHECK_FMT</span><span class="params">(<span class="number">1</span>,<span class="number">2</span>)</span></span>;</span><br><span class="line"><span class="function"><span class="keyword">void</span> <span class="title">event_sock_err</span><span class="params">(<span class="keyword">int</span> eval, <span class="keyword">evutil_socket_t</span> sock, <span class="keyword">const</span> <span class="keyword">char</span> *fmt, ...)</span> <span class="title">EV_CHECK_FMT</span><span class="params">(<span class="number">3</span>,<span class="number">4</span>)</span> EV_NORETURN</span>;</span><br><span class="line"><span class="function"><span class="keyword">void</span> <span class="title">event_sock_warn</span><span class="params">(<span class="keyword">evutil_socket_t</span> sock, <span class="keyword">const</span> <span class="keyword">char</span> *fmt, ...)</span> <span class="title">EV_CHECK_FMT</span><span class="params">(<span class="number">2</span>,<span class="number">3</span>)</span></span>;</span><br><span class="line"><span class="function"><span class="keyword">void</span> <span class="title">event_errx</span><span class="params">(<span class="keyword">int</span> eval, <span class="keyword">const</span> <span class="keyword">char</span> *fmt, ...)</span> <span class="title">EV_CHECK_FMT</span><span class="params">(<span class="number">2</span>,<span class="number">3</span>)</span> EV_NORETURN</span>;</span><br><span class="line"><span class="function"><span class="keyword">void</span> <span class="title">event_warnx</span><span class="params">(<span class="keyword">const</span> <span class="keyword">char</span> *fmt, ...)</span> <span class="title">EV_CHECK_FMT</span><span class="params">(<span class="number">1</span>,<span class="number">2</span>)</span></span>;</span><br><span class="line"><span class="function"><span class="keyword">void</span> <span class="title">event_msgx</span><span class="params">(<span class="keyword">const</span> <span class="keyword">char</span> *fmt, ...)</span> <span class="title">EV_CHECK_FMT</span><span class="params">(<span class="number">1</span>,<span class="number">2</span>)</span></span>;</span><br><span class="line"><span class="keyword">void</span> _event_debugx(<span class="keyword">const</span> <span class="keyword">char</span> *fmt, ...) EV_CHECK_FMT(<span class="number">1</span>,<span class="number">2</span>);</span><br></pre></td></tr></table></figure>
-<p>​    这些函数实现的功能大致为，获取错误的名称，获取错误描述，获取输出格式，获取输出字符串。</p>
-<p>​    然后它们会共同调用_warn_helpr这个函数　</p>
-<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">/**</span></span><br><span class="line"><span class="comment">* 仅供内部函数调用</span></span><br><span class="line"><span class="comment">*/</span></span><br><span class="line"><span class="keyword">static</span> <span class="keyword">void</span></span><br><span class="line">_warn_helper(<span class="keyword">int</span> severity, <span class="keyword">const</span> <span class="keyword">char</span> *errstr, <span class="keyword">const</span> <span class="keyword">char</span> *fmt, va_list ap)</span><br><span class="line">&#123;</span><br><span class="line">	<span class="keyword">char</span> buf[<span class="number">1024</span>];</span><br><span class="line">	<span class="keyword">size_t</span> len;</span><br><span class="line"></span><br><span class="line">	<span class="keyword">if</span> (fmt != <span class="literal">NULL</span>)</span><br><span class="line">         <span class="comment">// evutil_vsnprintf可以vsnprntf，跨平台设计本文不涉及，细节它会在buf[sizeof(buf) -1]处替换成/0　</span></span><br><span class="line">		evutil_vsnprintf(buf, <span class="keyword">sizeof</span>(buf), fmt, ap);  </span><br><span class="line">	<span class="keyword">else</span></span><br><span class="line">		buf[<span class="number">0</span>] = <span class="string">'\0'</span>;</span><br><span class="line"></span><br><span class="line">	<span class="keyword">if</span> (errstr) &#123;</span><br><span class="line">		len = <span class="built_in">strlen</span>(buf);</span><br><span class="line">		<span class="keyword">if</span> (len &lt; <span class="keyword">sizeof</span>(buf) - <span class="number">3</span>) &#123;</span><br><span class="line">			evutil_snprintf(buf + len, <span class="keyword">sizeof</span>(buf) - len, <span class="string">": %s"</span>, errstr);</span><br><span class="line">		&#125;</span><br><span class="line">	&#125;</span><br><span class="line">	event_log(severity, buf);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<pre><code>小结：libevent的日志库较为简略，用了两个全局的回调函数指针实现自定义处理，几乎没有做什么特别处理，不过在检查输入格式和输入信息的匹配值得学习。
-</code></pre>
-      
-
       
     </div>
     <div class="article-info article-info-index">
@@ -410,16 +235,75 @@
       
 
       
-        <p class="article-more-link">
-          <a class="article-more-a" href="/2018/09/11/libevnt源码分析1/">展开全文 >></a>
-        </p>
-      
 
+      
+        
+<div class="share-btn share-icons tooltip-left">
+  <div class="tooltip tooltip-east">
+    <span class="tooltip-item">
+      <a href="javascript:;" class="share-sns share-outer">
+        <i class="icon icon-share"></i>
+      </a>
+    </span>
+    <span class="tooltip-content">
+      <div class="share-wrap">
+        <div class="share-icons">
+          <a class="weibo share-sns" href="javascript:;" data-type="weibo">
+            <i class="icon icon-weibo"></i>
+          </a>
+          <a class="weixin share-sns wxFab" href="javascript:;" data-type="weixin">
+            <i class="icon icon-weixin"></i>
+          </a>
+          <a class="qq share-sns" href="javascript:;" data-type="qq">
+            <i class="icon icon-qq"></i>
+          </a>
+          <a class="douban share-sns" href="javascript:;" data-type="douban">
+            <i class="icon icon-douban"></i>
+          </a>
+          <a class="qzone share-sns" href="javascript:;" data-type="qzone">
+            <i class="icon icon-qzone"></i>
+          </a>
+          <a class="facebook share-sns" href="javascript:;" data-type="facebook">
+            <i class="icon icon-facebook"></i>
+          </a>
+          <a class="twitter share-sns" href="javascript:;" data-type="twitter">
+            <i class="icon icon-twitter"></i>
+          </a>
+          <a class="google share-sns" href="javascript:;" data-type="google">
+            <i class="icon icon-google"></i>
+          </a>
+        </div>
+      </div>
+    </span>
+  </div>
+</div>
+
+<div class="page-modal wx-share js-wx-box">
+    <a class="close js-modal-close" href="javascript:;"><i class="icon icon-close"></i></a>
+    <p>扫一扫，分享到微信</p>
+    <div class="wx-qrcode">
+      <img src="//pan.baidu.com/share/qrcode?url=https://justsolitude.com/2018/09/13/libevnt源码分析2/" alt="微信分享二维码">
+    </div>
+</div>
+
+<div class="mask js-mask"></div>
       
       <div class="clearfix"></div>
     </div>
   </div>
 </article>
+
+  
+<nav id="article-nav">
+  
+  
+    <a href="/2018/09/12/muduo源码学习笔记-2/" id="article-nav-older" class="article-nav-link-wrap">
+      <div class="article-nav-title">muduo源码学习笔记(2)</div>
+      <i class="icon-circle-right"></i>
+    </a>
+  
+</nav>
+
 
 <aside class="wrap-side-operation">
     <div class="mod-side-operation">
@@ -434,477 +318,42 @@
         </div>
         
         
-    </div>
-</aside>
-
-
-
-
-  
-    <article id="post-muduo源码学习笔记-1" class="article article-type-post  article-index" itemscope itemprop="blogPost">
-  <div class="article-inner">
-    
-      <header class="article-header">
-        
-  
-    <h1 itemprop="name">
-      <a class="article-title" href="/2018/09/02/muduo源码学习笔记-1/">muduo源码学习笔记(1)</a>
-    </h1>
-  
-
-        
-        <a href="/2018/09/02/muduo源码学习笔记-1/" class="archive-article-date">
-  	<time datetime="2018-09-02T10:36:00.000Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2018-09-02</time>
-</a>
-        
-      </header>
-    
-    <div class="article-entry" itemprop="articleBody">
-      
-        <p>前言：</p>
-<p>​    对于muduo库，我觉得，光Linux多线程上提到的一些实现，还是不够的，在base/里面，还有/net里面提供了很多不错的实现，值得去学习，暑假算是看看muduo的百分之八十的源码，并对其进行了一次实现，（剩下的在最近总结的时候，也会开始看看，并实现一遍），对于muduo库，简单谈谈自己对其实现的理解。</p>
-<h5 id="用RAII管理你的锁"><a href="#用RAII管理你的锁" class="headerlink" title="用RAII管理你的锁"></a>用RAII管理你的锁</h5><p>​    Posix Thread内定义的一系列的mutex函数，但是是基于C语言的，用起来很不方便，需要不断地初始化，销毁p，我们要对其进行一定程度的封装，使得我们不必重复的写初始话，销毁操作，专注在使用上。</p>
-<p>​    muduo对锁进行了封装，分别是Mutex、MutexGruad、Condition、CountDownLatch。</p>
-<h5 id="Mutex的实现"><a href="#Mutex的实现" class="headerlink" title="Mutex的实现"></a>Mutex的实现</h5><figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br></pre></td><td class="code"><pre><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">MutexLock</span> :</span> boost::noncopyable</span><br><span class="line">  &#123;</span><br><span class="line">  <span class="keyword">public</span>:</span><br><span class="line">      MutexLock():holder_(<span class="number">0</span>)</span><br><span class="line">      &#123;</span><br><span class="line">          MCHECK(pthread_mutex_init(&amp;mutex_, <span class="literal">NULL</span>));</span><br><span class="line">      &#125;</span><br><span class="line">      ~MutexLock()</span><br><span class="line">      &#123;</span><br><span class="line">          assert(holder_ == <span class="number">0</span>);</span><br><span class="line">          MCHECK(pthread_mutex_destroy(&amp;mutex_));</span><br><span class="line">      &#125;</span><br><span class="line">      <span class="function"><span class="keyword">bool</span> <span class="title">isLocketByThisThread</span><span class="params">()</span> <span class="keyword">const</span></span></span><br><span class="line"><span class="function">      </span>&#123;</span><br><span class="line">          <span class="keyword">return</span> holder_ == CurrentThread::tid();</span><br><span class="line">      &#125;</span><br><span class="line">      <span class="function"><span class="keyword">void</span> <span class="title">assertLocked</span><span class="params">()</span> <span class="keyword">const</span></span></span><br><span class="line"><span class="function">      </span>&#123;</span><br><span class="line">          assert(isLocketByThisThread());</span><br><span class="line">      &#125;</span><br><span class="line">      <span class="function"><span class="keyword">void</span> <span class="title">lock</span><span class="params">()</span></span></span><br><span class="line"><span class="function">      </span>&#123;</span><br><span class="line">          MCHECK(pthread_mutex_lock(&amp;mutex_));</span><br><span class="line">          assignHolder();</span><br><span class="line">      &#125;</span><br><span class="line">      <span class="function"><span class="keyword">void</span> <span class="title">unlock</span><span class="params">()</span></span></span><br><span class="line"><span class="function">      </span>&#123;</span><br><span class="line">          unassignHolder();</span><br><span class="line">          MCHECK(pthread_mutex_unlock(&amp;mutex_));</span><br><span class="line">      &#125;</span><br><span class="line">      <span class="keyword">pthread_mutex_t</span>* getPthreadMutex() <span class="comment">/* non-const */</span>　　　</span><br><span class="line">      &#123;</span><br><span class="line">          <span class="keyword">return</span> &amp;mutex_;</span><br><span class="line">      &#125;</span><br><span class="line">      <span class="keyword">private</span>:</span><br><span class="line">      <span class="function"><span class="keyword">void</span> <span class="title">unassignHolder</span><span class="params">()</span></span></span><br><span class="line"><span class="function">      </span>&#123;</span><br><span class="line">          holder_ = <span class="number">0</span>;</span><br><span class="line">      &#125;</span><br><span class="line">      <span class="function"><span class="keyword">void</span> <span class="title">assignHolder</span><span class="params">()</span></span></span><br><span class="line"><span class="function">      </span>&#123;</span><br><span class="line">          holder_ = CurrentThread::tid();</span><br><span class="line">      &#125;</span><br><span class="line">  <span class="keyword">private</span>:</span><br><span class="line">      <span class="keyword">pthread_mutex_t</span>  mutex_;</span><br><span class="line">      <span class="keyword">pid_t</span> holder_;       <span class="comment">// 如果不是同一个线程的加锁和解锁则会失败</span></span><br><span class="line">  &#125;;</span><br></pre></td></tr></table></figure>
-<p>如果单单只是这样实现mutex，还是太过于麻烦，而且这个锁，我们只能在函数内自动获取自动产生，然后自动析构，会有一定的性能损失。</p>
-<p>下面实现了MutexLockGurad用于自动获取锁，加锁和解锁。</p>
-<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">MutexLockGuard</span> :</span> boost::noncopyable</span><br><span class="line">&#123;</span><br><span class="line"><span class="keyword">public</span>:</span><br><span class="line">    explicit MutexLockGuard(MutexLock&amp; mutex):mutex_(mutex)</span><br><span class="line">    &#123;</span><br><span class="line">        mutex_.lock();</span><br><span class="line">    &#125;</span><br><span class="line">    ~MutexLockGuard()</span><br><span class="line">    &#123;</span><br><span class="line">        mutex_.unlock();</span><br><span class="line">    &#125;</span><br><span class="line"><span class="keyword">private</span>:</span><br><span class="line">    MutexLock&amp; mutex_;</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
-<p>还有需要注意的就是，在实现的时候，定义了两个宏</p>
-<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// 用宏的方式检查返回值是否为0，</span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">ifdef</span> CHECK_PTHREAD_RETURN_VALUE</span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">ifdef</span> NDEBUG</span></span><br><span class="line">__BEGIN_DECLS</span><br><span class="line"><span class="keyword">extern</span> <span class="keyword">void</span> __assert_perror_fail (<span class="keyword">int</span> errnum,</span><br><span class="line">                                  <span class="keyword">const</span> <span class="keyword">char</span> *file,</span><br><span class="line">                                  <span class="keyword">unsigned</span> <span class="keyword">int</span> line,</span><br><span class="line">                                  <span class="keyword">const</span> <span class="keyword">char</span> *function)</span><br><span class="line">    __THROW __attribute__ ((__noreturn__));</span><br><span class="line">__END_DECLS</span><br><span class="line"><span class="meta">#<span class="meta-keyword">endif</span></span></span><br><span class="line"></span><br><span class="line"><span class="meta">#<span class="meta-keyword">define</span> MCHECK(ret) (&#123; __typeof__ (ret) errnum = (ret);         \</span></span><br><span class="line">                       <span class="keyword">if</span> (__builtin_expect(errnum != <span class="number">0</span>, <span class="number">0</span>))    \</span><br><span class="line">                         __assert_perror_fail (errnum, __FILE__, __LINE__, __func__);&#125;)</span><br><span class="line"></span><br><span class="line"><span class="meta">#<span class="meta-keyword">else</span>  <span class="comment">// CHECK_PTHREAD_RETURN_VALUE</span></span></span><br><span class="line"><span class="comment">// 定义一个ret类型的errnum，然后判断errnum是否＝＝０，</span></span><br><span class="line"><span class="comment">// (void)(value)作用仅仅就是以显眼的方式让编译器不要给出参数未被使用的警告</span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">define</span> MCHECK(ret) (&#123; __typeof__ (ret) errnum = (ret);         \　　　</span></span><br><span class="line">                       assert(errnum == <span class="number">0</span>); (<span class="keyword">void</span>) errnum;&#125;)</span><br><span class="line"></span><br><span class="line"><span class="meta">#<span class="meta-keyword">endif</span> <span class="comment">// CHECK_PTHREAD_RETURN_VALUE</span></span></span><br><span class="line"><span class="comment">// 防止错误的用法</span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">define</span> MutexLockGuard(x) <span class="meta-keyword">error</span> <span class="meta-string">"Missing guard object name"</span></span></span><br></pre></td></tr></table></figure>
-<p>没有注释的代码，里面有些小问题，我们可以总结一下</p>
-<p><em>__builtin_expect</em></p>
-<p>​    提供给程序员使用的，目的是将“分支转移”的信息提供给编译器，这样编译器可以对代码进行优化，以减少指令跳转带来的性能下降。</p>
-<p>​    函数声明如下</p>
-<p>​    long __builtin_expect(long exp, long c);</p>
-<p>　　　　<em>exp</em> 为一个整型表达式, 例如: (ptr != NULL)</p>
-<p>　　　　 <em>c</em> 必须是一个编译期常量, 不能使用变量    </p>
-<p>　　　　返回值等于 第一个参数 <em>exp</em></p>
-<p>​    这个函数的语义是：你期望exp表达式的值等于常量c，从而GCC为你优化程序，将符合这个条件的分支放在合适的地方。</p>
-<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">__assert_perror_fail (errnum, __FILE__, __LINE__, __func__)</span><br></pre></td></tr></table></figure>
-<p>​    最后会按照<strong>FILE</strong> ：<strong>LINE　：</strong> <strong>func</strong>　: <strong>errnum</strong>打印出错误，和assert一样，都在编译时候执行，但是好处在于它能按照格式打印出错误在哪里，便于快速排查出错误。</p>
-<h5 id="Condition的实现"><a href="#Condition的实现" class="headerlink" title="Condition的实现"></a>Condition的实现</h5><p>​    如果直接使用我们上面实现的Mutex，会出现死锁。</p>
-<p>​    因为在我们使用Conditon的wait的时候：</p>
-<ul>
-<li><p>释放Mutex</p>
-</li>
-<li><p>阻塞等待</p>
-<p>​    当其它线程调用pthread_cond_signal或pthread_cond_signal,它会重写获取锁。</p>
-<p>​    这个时候，pthread_cond_wait势必会改变pthread_mutex_t和MutexLock:holder_的一致性。所以需要在调用<em>pthread_cond_wait</em>的前后添加一些代码去相应的修改<em>MutexLock::holder_</em>，也就是分别调用<em>MutexLock::unassignHolder</em>和<em>MutexLock::assignHolder</em>。<em>MutexLock::UnassignGuard</em>类的作用，就是利用RAII简化对<em>MutexLock::unassignHolder</em>和<em>MutexLock::assignHolder的调用。</em></p>
-<p> 所以在Ｍutex中我们需要加入unassignGuard类</p>
-<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br></pre></td><td class="code"><pre><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">Mutex</span></span></span><br><span class="line"><span class="class">&#123;</span></span><br><span class="line">    ...</span><br><span class="line"><span class="keyword">private</span>:</span><br><span class="line">  <span class="keyword">friend</span> <span class="class"><span class="keyword">class</span> <span class="title">Condition</span>;</span></span><br><span class="line"></span><br><span class="line">  <span class="class"><span class="keyword">class</span> <span class="title">UnassignGuard</span> :</span> boost::noncopyable</span><br><span class="line">  &#123;</span><br><span class="line">   <span class="keyword">public</span>:</span><br><span class="line">    UnassignGuard(MutexLock&amp; owner)</span><br><span class="line">      : owner_(owner)</span><br><span class="line">    &#123;</span><br><span class="line">      owner_.unassignHolder();</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    ~UnassignGuard()</span><br><span class="line">    &#123;</span><br><span class="line">      owner_.assignHolder();</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">   <span class="keyword">private</span>:</span><br><span class="line">    MutexLock&amp; owner_;</span><br><span class="line">  &#125;;</span><br><span class="line">    ...</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
-<p> 这样我们就可以实现Conditon了</p>
-<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br></pre></td><td class="code"><pre><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">Condition</span> :</span> boost::noncopyable</span><br><span class="line">&#123;</span><br><span class="line"> <span class="keyword">public</span>:</span><br><span class="line">  <span class="function"><span class="keyword">explicit</span> <span class="title">Condition</span><span class="params">(MutexLock&amp; mutex)</span></span></span><br><span class="line">    : mutex_(mutex)</span><br><span class="line">  &#123;</span><br><span class="line">    MCHECK(pthread_cond_init(&amp;pcond_, <span class="literal">NULL</span>));</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  ~Condition()</span><br><span class="line">  &#123;</span><br><span class="line">    MCHECK(pthread_cond_destroy(&amp;pcond_));</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  <span class="function"><span class="keyword">void</span> <span class="title">wait</span><span class="params">()</span></span></span><br><span class="line"><span class="function">  </span>&#123;</span><br><span class="line">    MutexLock::<span class="function">UnassignGuard <span class="title">ug</span><span class="params">(mutex_)</span></span>;   <span class="comment">//先将holder_清零，防止出现死锁</span></span><br><span class="line">    MCHECK(pthread_cond_wait(&amp;pcond_, mutex_.getPthreadMutex()));</span><br><span class="line">    <span class="comment">//　析构的时候，会将holder_恢复</span></span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  <span class="comment">// returns true if time out, false otherwise.</span></span><br><span class="line">  <span class="function"><span class="keyword">bool</span> <span class="title">waitForSeconds</span><span class="params">(<span class="keyword">double</span> seconds)</span></span>;</span><br><span class="line"></span><br><span class="line">  <span class="function"><span class="keyword">void</span> <span class="title">notify</span><span class="params">()</span></span></span><br><span class="line"><span class="function">  </span>&#123;</span><br><span class="line">    MCHECK(pthread_cond_signal(&amp;pcond_));</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  <span class="function"><span class="keyword">void</span> <span class="title">notifyAll</span><span class="params">()</span></span></span><br><span class="line"><span class="function">  </span>&#123;</span><br><span class="line">    MCHECK(pthread_cond_broadcast(&amp;pcond_));</span><br><span class="line">  &#125;</span><br><span class="line">  <span class="function"><span class="keyword">void</span> <span class="title">waitForSeconds</span><span class="params">(<span class="keyword">double</span> seconds)</span></span></span><br><span class="line"><span class="function">  </span>&#123;</span><br><span class="line">  	<span class="class"><span class="keyword">struct</span> <span class="title">timespec</span> <span class="title">abstime</span>;</span></span><br><span class="line">  	<span class="comment">// <span class="doctag">FIXME:</span> use CLOCK_MONOTONIC or CLOCK_MONOTONIC_RAW to prevent time rewind.</span></span><br><span class="line">  	clock_gettime(CLOCK_REALTIME, &amp;abstime);</span><br><span class="line"></span><br><span class="line">  	<span class="keyword">const</span> <span class="keyword">int64_t</span> kNanoSecondsPerSecond = <span class="number">1000000000</span>;</span><br><span class="line">  	<span class="keyword">int64_t</span> nanoseconds = <span class="keyword">static_cast</span>&lt;<span class="keyword">int64_t</span>&gt;(seconds * kNanoSecondsPerSecond);</span><br><span class="line"></span><br><span class="line">  	abstime.tv_sec += <span class="keyword">static_cast</span>&lt;<span class="keyword">time_t</span>&gt;((abstime.tv_nsec + nanoseconds) / 			kNanoSecondsPerSecond);</span><br><span class="line">  	abstime.tv_nsec = <span class="keyword">static_cast</span>&lt;<span class="keyword">long</span>&gt;((abstime.tv_nsec + nanoseconds) % 			     kNanoSecondsPerSecond);</span><br><span class="line"></span><br><span class="line">    MutexLock::<span class="function">UnassignGuard <span class="title">ug</span><span class="params">(mutex_)</span></span>;</span><br><span class="line">    <span class="keyword">return</span> ETIMEDOUT == pthread_cond_timedwait(&amp;pcond_, mutex_.getPthreadMutex(), 		&amp;abstime);</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line"> <span class="keyword">private</span>:</span><br><span class="line">  MutexLock&amp; mutex_;</span><br><span class="line">  <span class="keyword">pthread_cond_t</span> pcond_;</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
-<h5 id="CountDownLatch的实现"><a href="#CountDownLatch的实现" class="headerlink" title="CountDownLatch的实现"></a>CountDownLatch的实现</h5><p>我们有时对Condition类上面再套一层封装来使用，他就是我们的CountDownLatch类。通过倒计时计数器的方式，设置计数。倒计时未完，CountDownLatch的内部一直处于</p>
-<p>Condition类的wait()状态。倒计时完毕，唤醒cond，程序正常执行。所以我们可以给某件即将发生的事设置一个条件，比如至少5个满足才会触发该事件，那么计数值设为5，</p>
-<p>等到倒计时为0时，CountDownLatch类就可以让你顺利的去执行该事件了。</p>
-<p>所以它主要有两个用法：</p>
-<p>​    1.既可以用于所有子线程主动等待主线程发起“起跑”</p>
-<p>​    2.也可以用于主线哼等待子线程初始化完毕才开始工作</p>
-<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br></pre></td><td class="code"><pre><span class="line"></span><br><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">CountDownLatch</span> :</span> boost::noncopyable</span><br><span class="line">&#123;</span><br><span class="line"> <span class="keyword">public</span>:</span><br><span class="line"></span><br><span class="line">  <span class="function"><span class="keyword">explicit</span> <span class="title">CountDownLatch</span><span class="params">(<span class="keyword">int</span> count)</span></span></span><br><span class="line">  : mutex_(),</span><br><span class="line">    condition_(mutex_),</span><br><span class="line">    count_(count)</span><br><span class="line">  &#123;</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  <span class="function"><span class="keyword">void</span> <span class="title">wait</span><span class="params">()</span></span></span><br><span class="line"><span class="function">  </span>&#123;</span><br><span class="line">    <span class="function">MutexLockGuard <span class="title">lock</span><span class="params">(mutex_)</span></span>;</span><br><span class="line">  	<span class="keyword">while</span> (count_ &gt; <span class="number">0</span>)</span><br><span class="line">  	&#123;</span><br><span class="line">    	condition_.wait();</span><br><span class="line">  	&#125;</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  <span class="function"><span class="keyword">void</span> <span class="title">countDown</span><span class="params">()</span></span></span><br><span class="line"><span class="function">  </span>&#123;</span><br><span class="line">    <span class="function">MutexLockGuard <span class="title">lock</span><span class="params">(mutex_)</span></span>;</span><br><span class="line">  	--count_;</span><br><span class="line">  	<span class="keyword">if</span> (count_ == <span class="number">0</span>)</span><br><span class="line">  	&#123;</span><br><span class="line">    	condition_.notifyAll();</span><br><span class="line">  	&#125;</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  <span class="function"><span class="keyword">int</span> <span class="title">getCount</span><span class="params">()</span> <span class="keyword">const</span></span></span><br><span class="line"><span class="function">  </span>&#123;</span><br><span class="line">  	  <span class="function">MutexLockGuard <span class="title">lock</span><span class="params">(mutex_)</span></span>;</span><br><span class="line">  	  <span class="keyword">return</span> count_;</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line"> <span class="keyword">private</span>:</span><br><span class="line">  <span class="keyword">mutable</span> MutexLock mutex_;</span><br><span class="line">  Condition condition_;</span><br><span class="line">  <span class="keyword">int</span> count_;</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
-</li>
-</ul>
-
-      
-
-      
-    </div>
-    <div class="article-info article-info-index">
-      
-      
-	<div class="article-tag tagcloud">
-		<i class="icon-price-tags icon"></i>
-		<ul class="article-tag-list">
-			 
-        		<li class="article-tag-list-item">
-        			<a href="javascript:void(0)" class="js-tag article-tag-list-link color4">多线程</a>
-        		</li>
-      		 
-        		<li class="article-tag-list-item">
-        			<a href="javascript:void(0)" class="js-tag article-tag-list-link color1">muduo</a>
-        		</li>
-      		
-		</ul>
-	</div>
-
-      
-
-      
-        <p class="article-more-link">
-          <a class="article-more-a" href="/2018/09/02/muduo源码学习笔记-1/">展开全文 >></a>
-        </p>
-      
-
-      
-      <div class="clearfix"></div>
-    </div>
-  </div>
-</article>
-
-<aside class="wrap-side-operation">
-    <div class="mod-side-operation">
-        
-        <div class="jump-container" id="js-jump-container" style="display:none;">
-            <a href="javascript:void(0)" class="mod-side-operation__jump-to-top">
-                <i class="icon-font icon-back"></i>
-            </a>
-            <div id="js-jump-plan-container" class="jump-plan-container" style="top: -11px;">
-                <i class="icon-font icon-plane jump-plane"></i>
+        <div class="toc-container tooltip-left">
+            <i class="icon-font icon-category"></i>
+            <div class="tooltip tooltip-east">
+                <span class="tooltip-item">
+                </span>
+                <span class="tooltip-content">
+                    <div class="toc-article">
+                    <ol class="toc"><li class="toc-item toc-level-5"><a class="toc-link" href="#什么都没包装的内存管理"><span class="toc-number">1.</span> <span class="toc-text">什么都没包装的内存管理</span></a></li><li class="toc-item toc-level-5"><a class="toc-link" href="#尝试定义自己的内存管理函数"><span class="toc-number">2.</span> <span class="toc-text">尝试定义自己的内存管理函数</span></a></li><li class="toc-item toc-level-5"><a class="toc-link" href="#不得不提的注意事项"><span class="toc-number">3.</span> <span class="toc-text">不得不提的注意事项</span></a></li></ol>
+                    </div>
+                </span>
             </div>
         </div>
         
-        
     </div>
 </aside>
 
 
 
-
-  
-    <article id="post-漫谈io复用和高性能服务框架" class="article article-type-post  article-index" itemscope itemprop="blogPost">
-  <div class="article-inner">
-    
-      <header class="article-header">
-        
-  
-    <h1 itemprop="name">
-      <a class="article-title" href="/2018/07/26/漫谈io复用和高性能服务框架/">漫谈io复用和高性能服务框架</a>
-    </h1>
-  
-
-        
-        <a href="/2018/07/26/漫谈io复用和高性能服务框架/" class="archive-article-date">
-  	<time datetime="2018-07-26T10:36:00.000Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2018-07-26</time>
-</a>
-        
-      </header>
-    
-    <div class="article-entry" itemprop="articleBody">
-      
-        <p>​    前言：这篇博客可能会写的有点杂乱，毕竟是想到哪里写到哪里，至少算是一个总结性的文章。</p>
-<h3 id="一-IO复用的生"><a href="#一-IO复用的生" class="headerlink" title="一.IO复用的生"></a><strong>一.IO复用的生</strong></h3><p>​    首先我们先说说不用ＩＯ复用时，我们所谓的并发服务器的极限。简单的想，我们可以用一个线程来负责一个链接，但是线程个数又不是可以无限增大的，在简单的线程间的时间调度虽然可以说很廉价，但是廉价的东西乘以庞大的基数带来的结果是昂贵的。当不活跃的链接的占用了大部分，执行效率会变得更低。</p>
-<p>​    连接上的消息处理，可以分为两个阶段，即等待消息准备好和消息处理，当我们使用阻塞模型的时候，我们将这两个部分合二为一，从而一个链接只能捆绑一个链接，在需要的时候唤醒，不需要的时候睡眠。</p>
-<p>​    但是如果我们把等待消息准备好和消息处理分开，我们就不用频繁的唤醒和睡眠的进程，我们这时候也就需要一个线程，它的工作就是不断询问链接消息是否准备好，一旦准备好，它就将一个链接唤醒，直接创造/拿取一个线程对其进行消息的处理，进而可以减少时间调度和不活跃链接的代价。</p>
-<p>​    这就是IO多路复用了。多路复用就是处理等待消息准备好这件事的，但它可以同时处理多个连接！它也可能“等待”，所以它也会导致线程睡眠，然而这不要紧，因为它一对多、它可以监控所有连接。这样，当我们的线程被唤醒执行时，就一定是有一些连接准备好被我们的代码执行了，这是有效率的！没有那么多个线程都在争抢处理“等待消息准备好”阶段，整个世界终于清净了！</p>
-        
-          <a class="article-more-a" href="/2018/07/26/漫谈io复用和高性能服务框架/#more">more >></a>
-        
-      
-
-      
-    </div>
-    <div class="article-info article-info-index">
-      
-      
-	<div class="article-tag tagcloud">
-		<i class="icon-price-tags icon"></i>
-		<ul class="article-tag-list">
-			 
-        		<li class="article-tag-list-item">
-        			<a href="javascript:void(0)" class="js-tag article-tag-list-link color4">多线程</a>
-        		</li>
-      		 
-        		<li class="article-tag-list-item">
-        			<a href="javascript:void(0)" class="js-tag article-tag-list-link color1">服务端编程</a>
-        		</li>
-      		
-		</ul>
-	</div>
-
-      
-
-      
-        <p class="article-more-link">
-          <a class="article-more-a" href="/2018/07/26/漫谈io复用和高性能服务框架/">展开全文 >></a>
-        </p>
-      
-
-      
-      <div class="clearfix"></div>
-    </div>
-  </div>
-</article>
-
-<aside class="wrap-side-operation">
-    <div class="mod-side-operation">
-        
-        <div class="jump-container" id="js-jump-container" style="display:none;">
-            <a href="javascript:void(0)" class="mod-side-operation__jump-to-top">
-                <i class="icon-font icon-back"></i>
-            </a>
-            <div id="js-jump-plan-container" class="jump-plan-container" style="top: -11px;">
-                <i class="icon-font icon-plane jump-plane"></i>
-            </div>
-        </div>
-        
-        
-    </div>
-</aside>
-
-
-
-
-  
-    <article id="post-浅析线程安全的对象生命期的管理" class="article article-type-post  article-index" itemscope itemprop="blogPost">
-  <div class="article-inner">
-    
-      <header class="article-header">
-        
-  
-    <h1 itemprop="name">
-      <a class="article-title" href="/2018/07/20/浅析线程安全的对象生命期的管理/">浅析线程安全的对象生命期的管理</a>
-    </h1>
-  
-
-        
-        <a href="/2018/07/20/浅析线程安全的对象生命期的管理/" class="archive-article-date">
-  	<time datetime="2018-07-20T10:36:00.000Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2018-07-20</time>
-</a>
-        
-      </header>
-    
-    <div class="article-entry" itemprop="articleBody">
-      
-        <p><strong>1.前言：c++与其他面向对象语言不同，没有gc，c++要求程序员自己管理对象的生命，在并发编程环境下显得尤为困难。当一个对象能被多个线程同时看到时，那么对象的销毁时机就会变得模糊不清，可能出现多种竞争条件（race condition):</strong></p>
-<ul>
-<li>在即将析构一个对象时，从何知道别的线程是否正在执行该对象的成员。</li>
-<li>如何保证在执行成员的函数期间，对象不会被另一个线程析构。</li>
-<li>在调用某个成员函数之前，如何得知这个对象是否还活着？它的析构函数会不会碰巧执行到一半？</li>
-</ul>
-<p><strong>2.线程安全的定义</strong></p>
-<p>​    当多个线程访问某个类时，不管运行时环境采用何种调度方式或者这些线程将如何交替执行，并且在主调代码中不需要任何额外的同步或协同，这个类都能表现出正确的行为，那么这个类就是线程安全的。</p>
-<p><strong>3.实现一个简单的线程安全的计算类counter</strong></p>
-<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">//program 1.1.cpp</span></span><br><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">Counter</span>:</span> boost::noncopyable</span><br><span class="line">&#123;</span><br><span class="line"><span class="keyword">public</span>:</span><br><span class="line">    Counter() = <span class="keyword">default</span>;</span><br><span class="line">    <span class="keyword">int64_t</span> value() <span class="keyword">const</span>;</span><br><span class="line">    <span class="keyword">int64_t</span> getAndIncrease();</span><br><span class="line"><span class="keyword">private</span>:</span><br><span class="line">    <span class="keyword">int64_t</span> value_ = <span class="number">0</span>;</span><br><span class="line">    <span class="keyword">mutable</span> MutexLock mutex_;</span><br><span class="line">&#125;;</span><br><span class="line"><span class="keyword">int64_t</span> Counter::value() <span class="keyword">const</span></span><br><span class="line">&#123;</span><br><span class="line">    <span class="function">MutexLockGuard <span class="title">lock</span><span class="params">(mutex_)</span></span>;</span><br><span class="line">    <span class="keyword">return</span> value_;</span><br><span class="line">&#125;</span><br><span class="line"><span class="keyword">int64_t</span> Counter::getAndIncrease()</span><br><span class="line">&#123;</span><br><span class="line">    <span class="function">MutexLockGuard <span class="title">lock</span><span class="params">(mutex_)</span></span>;</span><br><span class="line">    <span class="keyword">int64_t</span> ret = value_++;</span><br><span class="line">    <span class="keyword">return</span> ret;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<p>​    因为每个counter对象都有自己的mutex_，因此不存在锁争用。而且由于lock的析构会晚于返回对象的构造，因此可以有效保护这个共享数据。</p>
-<p>​    如果mutex_的类型是static，则会导致每个对象拥有相同的mutex，会导致锁争用。</p>
-<p>​    如果counter是动态创建的并通过指针访问的话，在多线程中，可能两个以上线程都会持有counter对象的指针，因此会出现销毁时候的race condition。</p>
-        
-          <a class="article-more-a" href="/2018/07/20/浅析线程安全的对象生命期的管理/#more">more >></a>
-        
-      
-
-      
-    </div>
-    <div class="article-info article-info-index">
-      
-      
-	<div class="article-tag tagcloud">
-		<i class="icon-price-tags icon"></i>
-		<ul class="article-tag-list">
-			 
-        		<li class="article-tag-list-item">
-        			<a href="javascript:void(0)" class="js-tag article-tag-list-link color4">多线程</a>
-        		</li>
-      		 
-        		<li class="article-tag-list-item">
-        			<a href="javascript:void(0)" class="js-tag article-tag-list-link color1">服务端编程</a>
-        		</li>
-      		
-		</ul>
-	</div>
-
-      
-
-      
-        <p class="article-more-link">
-          <a class="article-more-a" href="/2018/07/20/浅析线程安全的对象生命期的管理/">展开全文 >></a>
-        </p>
-      
-
-      
-      <div class="clearfix"></div>
-    </div>
-  </div>
-</article>
-
-<aside class="wrap-side-operation">
-    <div class="mod-side-operation">
-        
-        <div class="jump-container" id="js-jump-container" style="display:none;">
-            <a href="javascript:void(0)" class="mod-side-operation__jump-to-top">
-                <i class="icon-font icon-back"></i>
-            </a>
-            <div id="js-jump-plan-container" class="jump-plan-container" style="top: -11px;">
-                <i class="icon-font icon-plane jump-plane"></i>
-            </div>
-        </div>
-        
-        
-    </div>
-</aside>
-
-
-
-
-  
-    <article id="post-ftp关键技术五-限制链接数" class="article article-type-post  article-index" itemscope itemprop="blogPost">
-  <div class="article-inner">
-    
-      <header class="article-header">
-        
-  
-    <h1 itemprop="name">
-      <a class="article-title" href="/2018/07/18/ftp关键技术五-限制链接数/">ftp关键技术五:限制链接数</a>
-    </h1>
-  
-
-        
-        <a href="/2018/07/18/ftp关键技术五-限制链接数/" class="archive-article-date">
-  	<time datetime="2018-07-18T13:30:00.000Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2018-07-18</time>
-</a>
-        
-      </header>
-    
-    <div class="article-entry" itemprop="articleBody">
-      
-        <hr>
-<p>​    通常在一些网站中，为了防止恶意大量的访问和超大量访问导致内存占满，会对单个链接的连接数和总链接数做出一个限制。</p>
-<p>​    以本FTP服务端为例，假设每个客户链接，我们都需要两个进程来处理它，假设了一个客户需要分配总共1M的栈内存出来，1000个链接，接近1G的内存就没有了。另一方面，如果单个ip大量链接服务端，会占用大量的带宽、内存和文件句柄，实际上每个用户（ip)只需要两三个链接就可以解决问题，所以对单个ip连接数进行限制，有助于维持服务端的性能稳定和防止恶意访问。</p>
-<p>​    在系统自带vsftpd中有如下的配置文件</p>
-<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">max_clients=300 最大客户端连接数为300</span><br><span class="line">max_per_ip=10 每个IP最大连接数</span><br></pre></td></tr></table></figure>
-<p>​    现在我们知道，我们需要一个数据结构来存储ip和ip对应的链接数，所以我们首先想到的就是用键值对模型，即每个ip对应一个链接数，并存储起来，并且我们需要能够快速插入、删除和查找，适合的就是树和hash表。但是连接数真的能解决问题吗？</p>
-<p>​
-        
-          <a class="article-more-a" href="/2018/07/18/ftp关键技术五-限制链接数/#more">more >></a>
-        
-      
-
-      
-    </div>
-    <div class="article-info article-info-index">
-      
-      
-	<div class="article-tag tagcloud">
-		<i class="icon-price-tags icon"></i>
-		<ul class="article-tag-list">
-			 
-        		<li class="article-tag-list-item">
-        			<a href="javascript:void(0)" class="js-tag article-tag-list-link color4">FTP</a>
-        		</li>
-      		
-		</ul>
-	</div>
-
-      
-
-      
-        <p class="article-more-link">
-          <a class="article-more-a" href="/2018/07/18/ftp关键技术五-限制链接数/">展开全文 >></a>
-        </p>
-      
-
-      
-      <div class="clearfix"></div>
-    </div>
-  </div>
-</article>
-
-<aside class="wrap-side-operation">
-    <div class="mod-side-operation">
-        
-        <div class="jump-container" id="js-jump-container" style="display:none;">
-            <a href="javascript:void(0)" class="mod-side-operation__jump-to-top">
-                <i class="icon-font icon-back"></i>
-            </a>
-            <div id="js-jump-plan-container" class="jump-plan-container" style="top: -11px;">
-                <i class="icon-font icon-plane jump-plane"></i>
-            </div>
-        </div>
-        
-        
-    </div>
-</aside>
-
-
-
-
-  
-    <article id="post-ftp关键技术四：空闲断开" class="article article-type-post  article-index" itemscope itemprop="blogPost">
-  <div class="article-inner">
-    
-      <header class="article-header">
-        
-  
-    <h1 itemprop="name">
-      <a class="article-title" href="/2018/06/13/ftp关键技术四：空闲断开/">ftp关键技术四：空闲断开</a>
-    </h1>
-  
-
-        
-        <a href="/2018/06/13/ftp关键技术四：空闲断开/" class="archive-article-date">
-  	<time datetime="2018-06-13T08:40:00.000Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2018-06-13</time>
-</a>
-        
-      </header>
-    
-    <div class="article-entry" itemprop="articleBody">
-      
-        <hr>
-<p><strong>首先提出一个问题，我们为什么需要空闲断开？</strong></p>
-<p>​    对于服务端而言，由于连接数和内存的限制，我们不可能对一个长时间处于不活跃的客户端，单独维护一个fd，一个进程/线程始终为其服务，fd单个进程上限默认值为1024，由于内存的限制，也不能无限制的分配出进程或者线程为其服务，这个时候我们就需要断开在规定时间内没有任何动作的客户端，腾出内存为其他客户端服务。</p>
-<p><strong>第二个问题，我们要基于什么实现空闲断开呢？</strong></p>
-<p>​    我们可以先设想需要一个可以在一定时间后能唤醒一个断开的服务的东西，而不是我们去维护一个进程，负责更新时间和断开（这样代价太大）。</p>
-<p>​    然后就想到了信号，设置一个定时的信号。</p>
-<p>​    等等，在设置一个定时信号的时候，我们是不是在该考虑一个问题，假设我们服务一个终端的ftp客户端，恰巧它开始下载一个非常大的文件，恰巧下载时间超过了服务端设置的空闲断开时间，这个时候就尴尬了，按照之前的想法，我们会空闲断开（注意：终端的ftp客户端下载时候，不可以发送其他命令，当然ctrl +c 的 abort除外）。</p>
-<p>​    所以我们就需要先定义一个data_process，如果在进行数据传输的时候，就设置data_process为true,安装信号的时候，检测到data_process就不再安装限时信号。</p>
-        
-          <a class="article-more-a" href="/2018/06/13/ftp关键技术四：空闲断开/#more">more >></a>
-        
-      
-
-      
-    </div>
-    <div class="article-info article-info-index">
-      
-      
-	<div class="article-tag tagcloud">
-		<i class="icon-price-tags icon"></i>
-		<ul class="article-tag-list">
-			 
-        		<li class="article-tag-list-item">
-        			<a href="javascript:void(0)" class="js-tag article-tag-list-link color4">FTP</a>
-        		</li>
-      		
-		</ul>
-	</div>
-
-      
-
-      
-        <p class="article-more-link">
-          <a class="article-more-a" href="/2018/06/13/ftp关键技术四：空闲断开/">展开全文 >></a>
-        </p>
-      
-
-      
-      <div class="clearfix"></div>
-    </div>
-  </div>
-</article>
-
-<aside class="wrap-side-operation">
-    <div class="mod-side-operation">
-        
-        <div class="jump-container" id="js-jump-container" style="display:none;">
-            <a href="javascript:void(0)" class="mod-side-operation__jump-to-top">
-                <i class="icon-font icon-back"></i>
-            </a>
-            <div id="js-jump-plan-container" class="jump-plan-container" style="top: -11px;">
-                <i class="icon-font icon-plane jump-plane"></i>
-            </div>
-        </div>
-        
-        
-    </div>
-</aside>
-
-
-
-
   
   
-    <nav id="page-nav">
-      <span class="page-number current">1</span><a class="page-number" href="/page/2/">2</a><a class="extend next" rel="next" href="/page/2/">Next &raquo;</a>
-    </nav>
+  
+
+  
+  <div id="SOHUCS" sid="libevnt源码分析2" ></div> 
+<script charset="utf-8" type="text/javascript" src="//changyan.sohu.com/upload/changyan.js" ></script>
+<script type="text/javascript">
+    window.changyan.api.config({
+        appid: "cytJs2M3p",
+        conf: "e1329fd3d49367d0715ddbdb345964a6"
+    });
+</script>
+</script>
+  
+
+  
+
   
 
 
@@ -927,8 +376,8 @@
     <script>
 	var yiliaConfig = {
 		mathjax: false,
-		isHome: true,
-		isPost: false,
+		isHome: false,
+		isPost: true,
 		isArchive: false,
 		isTag: false,
 		isCategory: false,
