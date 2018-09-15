@@ -6,19 +6,20 @@
   <meta name="renderer" content="webkit">
   <meta http-equiv="X-UA-Compatible" content="IE=edge" >
   <link rel="dns-prefetch" href="https://justsolitude.com">
-  <title>Archives: 2018 | Solitude</title>
+  <title>libevent源码分析(3) | Solitude</title>
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
-  <meta name="description" content="西邮16级学生，爱好游戏，致力于研究服务端开发各种技术，能力有限，此为博客一枚">
-<meta name="keywords" content="后端,c++,linuxer,多线程,高并发,开发者,程序猿,,极客,编程,代码,开源,IT网站,Developer,Programmer,Coder">
-<meta property="og:type" content="website">
-<meta property="og:title" content="Solitude">
-<meta property="og:url" content="https://justsolitude.com/archives/2018/index.html">
+  <meta name="description" content="写在前面： ​    这个源码是分析libevent-2.0.20-stable, 并非最新版本的libevent，作者并没有全看源码，在这里会推荐以下参考的一些网站，也欢迎大家在不足的地方提出来进行讨论。 ​    libevent源码分析 ​    libevent深度剖析１ ​    libevent深度剖析２ 锁和线程​    libevent的内部实现不需要多线程，为此我们在libeve">
+<meta name="keywords" content="libevent">
+<meta property="og:type" content="article">
+<meta property="og:title" content="libevent源码分析(3)">
+<meta property="og:url" content="https://justsolitude.com/2018/09/14/libevent源码分析3/index.html">
 <meta property="og:site_name" content="Solitude">
-<meta property="og:description" content="西邮16级学生，爱好游戏，致力于研究服务端开发各种技术，能力有限，此为博客一枚">
+<meta property="og:description" content="写在前面： ​    这个源码是分析libevent-2.0.20-stable, 并非最新版本的libevent，作者并没有全看源码，在这里会推荐以下参考的一些网站，也欢迎大家在不足的地方提出来进行讨论。 ​    libevent源码分析 ​    libevent深度剖析１ ​    libevent深度剖析２ 锁和线程​    libevent的内部实现不需要多线程，为此我们在libeve">
 <meta property="og:locale" content="default">
+<meta property="og:updated_time" content="2018-09-15T13:22:45.488Z">
 <meta name="twitter:card" content="summary">
-<meta name="twitter:title" content="Solitude">
-<meta name="twitter:description" content="西邮16级学生，爱好游戏，致力于研究服务端开发各种技术，能力有限，此为博客一枚">
+<meta name="twitter:title" content="libevent源码分析(3)">
+<meta name="twitter:description" content="写在前面： ​    这个源码是分析libevent-2.0.20-stable, 并非最新版本的libevent，作者并没有全看源码，在这里会推荐以下参考的一些网站，也欢迎大家在不足的地方提出来进行讨论。 ​    libevent源码分析 ​    libevent深度剖析１ ​    libevent深度剖析２ 锁和线程​    libevent的内部实现不需要多线程，为此我们在libeve">
   
     <link rel="alternative" href="/atom.xml" title="Solitude" type="application/atom+xml">
   
@@ -142,36 +143,98 @@
             <canvas data-colors="#eaeaea" data-sectionHeight="100" data-contentId="js-content" id="myCanvas1" class="anm-canvas"></canvas>
           </div>
           <div id="js-content" class="content-ll">
-            
+            <article id="post-libevent源码分析3" class="article article-type-post " itemscope itemprop="blogPost">
+  <div class="article-inner">
+    
+      <header class="article-header">
+        
   
+    <h1 class="article-title" itemprop="name">
+      libevent源码分析(3)
+    </h1>
   
-    
-    
-      
-      
-      <section class="archives-wrap">
-        <div class="archive-year-wrap">
-          <a href="/archives/2018" class="archive-year">2018</a>
-        </div>
-        <div class="archives">
-    
-    <article class="archive-article archive-type-post">
-  <div class="archive-article-inner">
-    <header class="archive-article-header">
-      	<div class="article-meta">
-	      	<a href="/2018/09/14/libevent源码分析3/" class="archive-article-date">
+
+        
+        <a href="/2018/09/14/libevent源码分析3/" class="archive-article-date">
   	<time datetime="2018-09-14T11:00:00.000Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2018-09-14</time>
 </a>
-        </div>
-    	 
-  
-    <h1 itemprop="name">
-      <a class="archive-article-title" href="/2018/09/14/libevent源码分析3/">libevent源码分析(3)</a>
-    </h1>
-  
+        
+      </header>
+    
+    <div class="article-entry" itemprop="articleBody">
+      
+        <p>写在前面：</p>
+<p>​    这个源码是分析libevent-2.0.20-stable, 并非最新版本的libevent，作者并没有全看源码，在这里会推荐以下参考的一些网站，也欢迎大家在不足的地方提出来进行讨论。</p>
+<p>​    <a href="https://blog.csdn.net/luotuo44/article/list/3" target="_blank" rel="noopener">libevent源码分析</a></p>
+<p>​    <a href="https://blog.csdn.net/jcjx0315/article/details/79693484" target="_blank" rel="noopener">libevent深度剖析１</a></p>
+<p>​    <a href="https://blog.csdn.net/sparkliang/article/details/4957667" target="_blank" rel="noopener">libevent深度剖析２</a></p>
+<h5 id="锁和线程"><a href="#锁和线程" class="headerlink" title="锁和线程"></a>锁和线程</h5><p>​    libevent的内部实现不需要多线程，为此我们在libevent的源码中也看不到有关线程的接口。但是我们很有可能在某个多线程程序中使用libevent，那么就需要保证线程共享的结构体是线程安全的，为此libevent提供了锁和条件变量来确保线程的同步。</p>
+<p>​    libevent的结构体在多线程下通常有三种方式：</p>
+<p>某些结构体只能使用在单线程：同时在多个线程中使用它们总是不安全的。</p>
+<p>某些结构具有可选择的锁： 可以告知libevent是否需要在多个线程中使用每个对象。</p>
+<p>某些结构体总是锁定的：如果libevent在支持锁的配置下运行，在多线程中使用它们总是安全的。</p>
+<p>如果想要开启多线程模式，需要调用eventhread_use_pthreads()函数</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">int</span></span><br><span class="line">evthread_use_pthreads(<span class="keyword">void</span>)</span><br><span class="line">&#123;</span><br><span class="line">	<span class="class"><span class="keyword">struct</span> <span class="title">evthread_lock_callbacks</span> <span class="title">cbs</span> = &#123;</span></span><br><span class="line">		EVTHREAD_LOCK_API_VERSION,</span><br><span class="line">		EVTHREAD_LOCKTYPE_RECURSIVE,</span><br><span class="line">		evthread_posix_lock_alloc,</span><br><span class="line">		evthread_posix_lock_free,</span><br><span class="line">		evthread_posix_lock,</span><br><span class="line">		evthread_posix_unlock</span><br><span class="line">	&#125;;</span><br><span class="line">	<span class="class"><span class="keyword">struct</span> <span class="title">evthread_condition_callbacks</span> <span class="title">cond_cbs</span> = &#123;</span></span><br><span class="line">		EVTHREAD_CONDITION_API_VERSION,</span><br><span class="line">		evthread_posix_cond_alloc,</span><br><span class="line">		evthread_posix_cond_free,</span><br><span class="line">		evthread_posix_cond_signal,</span><br><span class="line">		evthread_posix_cond_wait</span><br><span class="line">	&#125;;</span><br><span class="line">	<span class="comment">/* Set ourselves up to get recursive locks. */</span></span><br><span class="line">	<span class="keyword">if</span> (pthread_mutexattr_init(&amp;attr_recursive))</span><br><span class="line">		<span class="keyword">return</span> <span class="number">-1</span>;</span><br><span class="line">	<span class="keyword">if</span> (pthread_mutexattr_settype(&amp;attr_recursive, PTHREAD_MUTEX_RECURSIVE))</span><br><span class="line">		<span class="keyword">return</span> <span class="number">-1</span>;</span><br><span class="line"></span><br><span class="line">	evthread_set_lock_callbacks(&amp;cbs);</span><br><span class="line">	evthread_set_condition_callbacks(&amp;cond_cbs);</span><br><span class="line">	evthread_set_id_callback(evthread_posix_get_id);</span><br><span class="line">	<span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>​    接下来我们就针对这个函数，自顶向下看看源码的实现，首先我们来看看锁回调结构体的实现</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line"><span class="class"><span class="keyword">struct</span> <span class="title">evthread_lock_callbacks</span> &#123;</span></span><br><span class="line">	<span class="keyword">int</span> lock_api_version;</span><br><span class="line">	<span class="comment">//版本号，默认设置为宏EVTHREAD_LOCK_API_VERSION</span></span><br><span class="line">	<span class="keyword">unsigned</span> supported_locktypes;</span><br><span class="line">    <span class="comment">//支持的锁类型，有普通锁，递归锁，读写锁三种</span></span><br><span class="line">    </span><br><span class="line">    <span class="comment">//分配一个锁变量(指针类型)，因为不同的平台锁变量是不同的类型</span></span><br><span class="line">	<span class="comment">//所以用这个通用的void*类型</span></span><br><span class="line">	<span class="keyword">void</span> *(*alloc)(<span class="keyword">unsigned</span> locktype);　　</span><br><span class="line">	<span class="keyword">void</span> (*<span class="built_in">free</span>)(<span class="keyword">void</span> *lock, <span class="keyword">unsigned</span> locktype);　　</span><br><span class="line">	<span class="keyword">int</span> (*lock)(<span class="keyword">unsigned</span> mode, <span class="keyword">void</span> *lock);		</span><br><span class="line">	<span class="keyword">int</span> (*unlock)(<span class="keyword">unsigned</span> mode, <span class="keyword">void</span> *lock);</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
+<p>​    第一个元素是api_version，但是似乎在libevent中，都只有一个版本被宏定义成了１</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="meta-keyword">define</span> EVTHREAD_LOCK_API_VERSION 1</span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">define</span> EVTHREAD_CONDITION_API_VERSION 1</span></span><br></pre></td></tr></table></figure>
+<p>​    但是在我们实现的时候，我们可以自定义自己的锁版本和实现。</p>
+<p>​    目前Libevent支持的locktype锁类型有三种：</p>
+<ul>
+<li><p>普通锁， 值为0</p>
+</li>
+<li><p>递归锁， 值为EVTHREAD_LOCKTYPE_RECURSIVE</p>
+</li>
+<li><p>读写锁， 值为EVTHREAD_LOCKTYPE_READWRITE</p>
+<p>参数mode(锁模式)则取下面的值：</p>
+</li>
+<li><p>EVTHREAD_READ：仅用于读写锁：为读操作请求或者释放锁</p>
+</li>
+<li><p>EVTHREAD_WRITE：仅用于读写锁：为写操作请求或者释放锁</p>
+</li>
+<li><p>EVTHREAD_TRY：仅用于锁定：仅在可以立刻锁定的时候才请求锁定</p>
+</li>
+</ul>
+<p>　　剩余的元素，我们可以自己定制属于自己的锁函数或者调用系统默认的版本，接下来我们先看看系统默认版本的实现。</p>
+<p>​    系统默认的实现封装在evthread_pthread.c文件中(ps: 本文只讨论跨平台锁的实现，但是不同时分析两个平台)</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">static</span> <span class="keyword">void</span> *</span><br><span class="line">evthread_posix_lock_alloc(<span class="keyword">unsigned</span> locktype)</span><br><span class="line">&#123;</span><br><span class="line">	<span class="keyword">pthread_mutexattr_t</span> *attr = <span class="literal">NULL</span>;</span><br><span class="line">	<span class="keyword">pthread_mutex_t</span> *lock = mm_malloc(<span class="keyword">sizeof</span>(<span class="keyword">pthread_mutex_t</span>));　<span class="comment">//动态分配</span></span><br><span class="line">	<span class="keyword">if</span> (!lock)</span><br><span class="line">		<span class="keyword">return</span> <span class="literal">NULL</span>;</span><br><span class="line">	<span class="keyword">if</span> (locktype &amp; EVTHREAD_LOCKTYPE_RECURSIVE) <span class="comment">//是否设置递归属性</span></span><br><span class="line">		attr = &amp;attr_recursive;</span><br><span class="line">	<span class="keyword">if</span> (pthread_mutex_init(lock, attr)) &#123;</span><br><span class="line">		mm_free(lock);</span><br><span class="line">		<span class="keyword">return</span> <span class="literal">NULL</span>;</span><br><span class="line">	&#125;</span><br><span class="line">	<span class="keyword">return</span> lock;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">static</span> <span class="keyword">void</span></span><br><span class="line">evthread_posix_lock_free(<span class="keyword">void</span> *_lock, <span class="keyword">unsigned</span> locktype)</span><br><span class="line">&#123;</span><br><span class="line">	<span class="keyword">pthread_mutex_t</span> *lock = _lock;</span><br><span class="line">	pthread_mutex_destroy(lock);</span><br><span class="line">	mm_free(lock);　　</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">static</span> <span class="keyword">int</span></span><br><span class="line">evthread_posix_lock(<span class="keyword">unsigned</span> mode, <span class="keyword">void</span> *_lock)</span><br><span class="line">&#123;</span><br><span class="line">	<span class="keyword">pthread_mutex_t</span> *lock = _lock;</span><br><span class="line">	<span class="keyword">if</span> (mode &amp; EVTHREAD_TRY)</span><br><span class="line">		<span class="keyword">return</span> pthread_mutex_trylock(lock); <span class="comment">//仅在可以立刻锁定的时候才请求锁定</span></span><br><span class="line">	<span class="keyword">else</span></span><br><span class="line">		<span class="keyword">return</span> pthread_mutex_lock(lock);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">static</span> <span class="keyword">int</span></span><br><span class="line">evthread_posix_unlock(<span class="keyword">unsigned</span> mode, <span class="keyword">void</span> *_lock)</span><br><span class="line">&#123;</span><br><span class="line">	<span class="keyword">pthread_mutex_t</span> *lock = _lock;</span><br><span class="line">	<span class="keyword">return</span> pthread_mutex_unlock(lock);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>​    条件变量的实现也是了类似，简单的对于condiiton进行封装就不在赘述了。</p>
+<p>​    我们就接着分析如何实现自定义锁的实现。</p>
+<p>​    首先类似于前面的实现，libevent在实现的时候，定义了两个全局静态变量</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">GLOBAL <span class="class"><span class="keyword">struct</span> <span class="title">evthread_lock_callbacks</span> _<span class="title">evthread_lock_fns</span> = &#123;</span></span><br><span class="line">	<span class="number">0</span>, <span class="number">0</span>, <span class="literal">NULL</span>, <span class="literal">NULL</span>, <span class="literal">NULL</span>, <span class="literal">NULL</span></span><br><span class="line">&#125;;</span><br><span class="line">GLOBAL <span class="class"><span class="keyword">struct</span> <span class="title">evthread_condition_callbacks</span> _<span class="title">evthread_cond_fns</span> = &#123;</span></span><br><span class="line">	<span class="number">0</span>, <span class="literal">NULL</span>, <span class="literal">NULL</span>, <span class="literal">NULL</span>, <span class="literal">NULL</span></span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
+<p>​    然后当我们调用回调设置函数进行函数，下面举例lock的回调实现</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">int</span></span><br><span class="line">evthread_set_lock_callbacks(<span class="keyword">const</span> struct evthread_lock_callbacks *cbs)</span><br><span class="line">&#123;</span><br><span class="line">    <span class="comment">//　for debug</span></span><br><span class="line">	<span class="class"><span class="keyword">struct</span> <span class="title">evthread_lock_callbacks</span> *<span class="title">target</span> =</span></span><br><span class="line"><span class="class">	    _<span class="title">evthread_lock_debugging_enabled</span></span></span><br><span class="line"><span class="class">	    ? &amp;_<span class="title">original_lock_fns</span> :</span> &amp;_evthread_lock_fns;</span><br><span class="line"></span><br><span class="line">	<span class="keyword">if</span> (!cbs) &#123;</span><br><span class="line">		<span class="keyword">if</span> (target-&gt;alloc)</span><br><span class="line">			event_warnx(<span class="string">"Trying to disable lock functions after "</span></span><br><span class="line">			    <span class="string">"they have been set up will probaby not work."</span>);</span><br><span class="line">		<span class="built_in">memset</span>(target, <span class="number">0</span>, <span class="keyword">sizeof</span>(_evthread_lock_fns));</span><br><span class="line">		<span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">	&#125;</span><br><span class="line">	<span class="keyword">if</span> (target-&gt;alloc)    <span class="comment">//如果存在的话，有可能分配了锁，如果更改会出现dump core</span></span><br><span class="line">	&#123;</span><br><span class="line">		<span class="comment">/* Uh oh; we already had locking callbacks set up.*/</span></span><br><span class="line">		<span class="keyword">if</span> (target-&gt;lock_api_version == cbs-&gt;lock_api_version &amp;&amp;</span><br><span class="line">			target-&gt;supported_locktypes == cbs-&gt;supported_locktypes &amp;&amp;</span><br><span class="line">			target-&gt;alloc == cbs-&gt;alloc &amp;&amp;</span><br><span class="line">			target-&gt;<span class="built_in">free</span> == cbs-&gt;<span class="built_in">free</span> &amp;&amp;</span><br><span class="line">			target-&gt;lock == cbs-&gt;lock &amp;&amp;</span><br><span class="line">			target-&gt;unlock == cbs-&gt;unlock) &#123;</span><br><span class="line">			<span class="comment">/* no change -- allow this. */</span></span><br><span class="line">			<span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">		&#125;</span><br><span class="line">		event_warnx(<span class="string">"Can't change lock callbacks once they have been "</span></span><br><span class="line">		    <span class="string">"initialized."</span>);</span><br><span class="line">		<span class="keyword">return</span> <span class="number">-1</span>;</span><br><span class="line">	&#125;</span><br><span class="line">	<span class="keyword">if</span> (cbs-&gt;alloc &amp;&amp; cbs-&gt;<span class="built_in">free</span> &amp;&amp; cbs-&gt;lock &amp;&amp; cbs-&gt;unlock) </span><br><span class="line">	&#123;</span><br><span class="line">		<span class="built_in">memcpy</span>(target, cbs, <span class="keyword">sizeof</span>(_evthread_lock_fns));</span><br><span class="line">		<span class="keyword">return</span> event_global_setup_locks_(<span class="number">1</span>);　</span><br><span class="line">	&#125; </span><br><span class="line">	<span class="keyword">else</span> </span><br><span class="line">	&#123;</span><br><span class="line">		<span class="keyword">return</span> <span class="number">-1</span>;</span><br><span class="line">	&#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>​    一旦用户调用evthread_use_windows_threads()或者evthread_use_pthreads()函数，那么用户就为Libevent定制了自己的线程锁操作。Libevent的其他代码中，如果需要用到锁，就会去调用这些线程锁操作。在实现上，当调用evthread_use_windows_threads()或者evthread_use_pthreads()函数时，两个函数的内部都会调用evthread_set_lock_callbacks函数。而这个设置函数会把前面两个evthread_use_xxx函数中定义的cbs变量值复制到一个evthread_lock_callbacks类型的_evthread_lock_fns全局变量保存起来。以后，Libevent需要用到多线程锁操作，直接访问这个_evthread_lock_fn变量即可。对于条件变量，也是用这样方式实现的。</p>
 
-        <div class="article-info info-on-right">
-          
+      
+
+      
+        <div class="page-reward">
+          <a href="javascript:;" class="page-reward-btn tooltip-top">
+            <div class="tooltip tooltip-east">
+            <span class="tooltip-item">
+              赏
+            </span>
+            <span class="tooltip-content">
+              <span class="tooltip-text">
+                <span class="tooltip-inner">
+                  <p class="reward-p"><i class="icon icon-quo-left"></i>谢谢你请我吃糖果<i class="icon icon-quo-right"></i></p>
+                  <div class="reward-box">
+                    
+                    
+                  </div>
+                </span>
+              </span>
+            </span>
+          </div>
+          </a>
+        </div>
+      
+    </div>
+    <div class="article-info article-info-index">
+      
+      
 	<div class="article-tag tagcloud">
 		<i class="icon-price-tags icon"></i>
 		<ul class="article-tag-list">
@@ -183,491 +246,129 @@
 		</ul>
 	</div>
 
-          
+      
 
+      
+
+      
+        
+<div class="share-btn share-icons tooltip-left">
+  <div class="tooltip tooltip-east">
+    <span class="tooltip-item">
+      <a href="javascript:;" class="share-sns share-outer">
+        <i class="icon icon-share"></i>
+      </a>
+    </span>
+    <span class="tooltip-content">
+      <div class="share-wrap">
+        <div class="share-icons">
+          <a class="weibo share-sns" href="javascript:;" data-type="weibo">
+            <i class="icon icon-weibo"></i>
+          </a>
+          <a class="weixin share-sns wxFab" href="javascript:;" data-type="weixin">
+            <i class="icon icon-weixin"></i>
+          </a>
+          <a class="qq share-sns" href="javascript:;" data-type="qq">
+            <i class="icon icon-qq"></i>
+          </a>
+          <a class="douban share-sns" href="javascript:;" data-type="douban">
+            <i class="icon icon-douban"></i>
+          </a>
+          <a class="qzone share-sns" href="javascript:;" data-type="qzone">
+            <i class="icon icon-qzone"></i>
+          </a>
+          <a class="facebook share-sns" href="javascript:;" data-type="facebook">
+            <i class="icon icon-facebook"></i>
+          </a>
+          <a class="twitter share-sns" href="javascript:;" data-type="twitter">
+            <i class="icon icon-twitter"></i>
+          </a>
+          <a class="google share-sns" href="javascript:;" data-type="google">
+            <i class="icon icon-google"></i>
+          </a>
         </div>
-        <div class="clearfix"></div>
-    </header>
+      </div>
+    </span>
+  </div>
+</div>
+
+<div class="page-modal wx-share js-wx-box">
+    <a class="close js-modal-close" href="javascript:;"><i class="icon icon-close"></i></a>
+    <p>扫一扫，分享到微信</p>
+    <div class="wx-qrcode">
+      <img src="//pan.baidu.com/share/qrcode?url=https://justsolitude.com/2018/09/14/libevent源码分析3/" alt="微信分享二维码">
+    </div>
+</div>
+
+<div class="mask js-mask"></div>
+      
+      <div class="clearfix"></div>
+    </div>
   </div>
 </article>
+
   
-    
-    
-    <article class="archive-article archive-type-post">
-  <div class="archive-article-inner">
-    <header class="archive-article-header">
-      	<div class="article-meta">
-	      	<a href="/2018/09/13/libevnt源码分析2/" class="archive-article-date">
-  	<time datetime="2018-09-13T11:00:00.000Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2018-09-13</time>
-</a>
+<nav id="article-nav">
+  
+  
+    <a href="/2018/09/13/libevnt源码分析2/" id="article-nav-older" class="article-nav-link-wrap">
+      <div class="article-nav-title">libevent源码分析(2)</div>
+      <i class="icon-circle-right"></i>
+    </a>
+  
+</nav>
+
+
+<aside class="wrap-side-operation">
+    <div class="mod-side-operation">
+        
+        <div class="jump-container" id="js-jump-container" style="display:none;">
+            <a href="javascript:void(0)" class="mod-side-operation__jump-to-top">
+                <i class="icon-font icon-back"></i>
+            </a>
+            <div id="js-jump-plan-container" class="jump-plan-container" style="top: -11px;">
+                <i class="icon-font icon-plane jump-plane"></i>
+            </div>
         </div>
-    	 
-  
-    <h1 itemprop="name">
-      <a class="archive-article-title" href="/2018/09/13/libevnt源码分析2/">libevent源码分析(2)</a>
-    </h1>
-  
-
-        <div class="article-info info-on-right">
-          
-	<div class="article-tag tagcloud">
-		<i class="icon-price-tags icon"></i>
-		<ul class="article-tag-list">
-			 
-        		<li class="article-tag-list-item">
-        			<a href="javascript:void(0)" class="js-tag article-tag-list-link color4">libevent</a>
-        		</li>
-      		
-		</ul>
-	</div>
-
-          
-
+        
+        
+        <div class="toc-container tooltip-left">
+            <i class="icon-font icon-category"></i>
+            <div class="tooltip tooltip-east">
+                <span class="tooltip-item">
+                </span>
+                <span class="tooltip-content">
+                    <div class="toc-article">
+                    <ol class="toc"><li class="toc-item toc-level-5"><a class="toc-link" href="#锁和线程"><span class="toc-number">1.</span> <span class="toc-text">锁和线程</span></a></li></ol>
+                    </div>
+                </span>
+            </div>
         </div>
-        <div class="clearfix"></div>
-    </header>
-  </div>
-</article>
+        
+    </div>
+</aside>
+
+
+
   
-    
-    
-    <article class="archive-article archive-type-post">
-  <div class="archive-article-inner">
-    <header class="archive-article-header">
-      	<div class="article-meta">
-	      	<a href="/2018/09/12/muduo源码学习笔记-2/" class="archive-article-date">
-  	<time datetime="2018-09-12T10:36:00.000Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2018-09-12</time>
-</a>
-        </div>
-    	 
   
-    <h1 itemprop="name">
-      <a class="archive-article-title" href="/2018/09/12/muduo源码学习笔记-2/">muduo源码学习笔记(2)</a>
-    </h1>
   
 
-        <div class="article-info info-on-right">
-          
-	<div class="article-tag tagcloud">
-		<i class="icon-price-tags icon"></i>
-		<ul class="article-tag-list">
-			 
-        		<li class="article-tag-list-item">
-        			<a href="javascript:void(0)" class="js-tag article-tag-list-link color4">多线程</a>
-        		</li>
-      		 
-        		<li class="article-tag-list-item">
-        			<a href="javascript:void(0)" class="js-tag article-tag-list-link color1">muduo</a>
-        		</li>
-      		
-		</ul>
-	</div>
-
-          
-
-        </div>
-        <div class="clearfix"></div>
-    </header>
-  </div>
-</article>
   
-    
-    
-    <article class="archive-article archive-type-post">
-  <div class="archive-article-inner">
-    <header class="archive-article-header">
-      	<div class="article-meta">
-	      	<a href="/2018/09/11/libevnt源码分析1/" class="archive-article-date">
-  	<time datetime="2018-09-11T11:00:00.000Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2018-09-11</time>
-</a>
-        </div>
-    	 
-  
-    <h1 itemprop="name">
-      <a class="archive-article-title" href="/2018/09/11/libevnt源码分析1/">libevent源码分析(1)</a>
-    </h1>
+  <div id="SOHUCS" sid="libevent源码分析3" ></div> 
+<script charset="utf-8" type="text/javascript" src="//changyan.sohu.com/upload/changyan.js" ></script>
+<script type="text/javascript">
+    window.changyan.api.config({
+        appid: "cytJs2M3p",
+        conf: "e1329fd3d49367d0715ddbdb345964a6"
+    });
+</script>
+</script>
   
 
-        <div class="article-info info-on-right">
-          
-	<div class="article-tag tagcloud">
-		<i class="icon-price-tags icon"></i>
-		<ul class="article-tag-list">
-			 
-        		<li class="article-tag-list-item">
-        			<a href="javascript:void(0)" class="js-tag article-tag-list-link color4">libevent</a>
-        		</li>
-      		
-		</ul>
-	</div>
-
-          
-
-        </div>
-        <div class="clearfix"></div>
-    </header>
-  </div>
-</article>
-  
-    
-    
-    <article class="archive-article archive-type-post">
-  <div class="archive-article-inner">
-    <header class="archive-article-header">
-      	<div class="article-meta">
-	      	<a href="/2018/09/03/muduo源码学习笔记-1/" class="archive-article-date">
-  	<time datetime="2018-09-03T08:36:00.000Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2018-09-03</time>
-</a>
-        </div>
-    	 
-  
-    <h1 itemprop="name">
-      <a class="archive-article-title" href="/2018/09/03/muduo源码学习笔记-1/">muduo源码学习笔记(1)</a>
-    </h1>
   
 
-        <div class="article-info info-on-right">
-          
-	<div class="article-tag tagcloud">
-		<i class="icon-price-tags icon"></i>
-		<ul class="article-tag-list">
-			 
-        		<li class="article-tag-list-item">
-        			<a href="javascript:void(0)" class="js-tag article-tag-list-link color4">多线程</a>
-        		</li>
-      		 
-        		<li class="article-tag-list-item">
-        			<a href="javascript:void(0)" class="js-tag article-tag-list-link color1">muduo</a>
-        		</li>
-      		
-		</ul>
-	</div>
-
-          
-
-        </div>
-        <div class="clearfix"></div>
-    </header>
-  </div>
-</article>
   
-    
-    
-    <article class="archive-article archive-type-post">
-  <div class="archive-article-inner">
-    <header class="archive-article-header">
-      	<div class="article-meta">
-	      	<a href="/2018/07/26/漫谈io复用和高性能服务框架/" class="archive-article-date">
-  	<time datetime="2018-07-26T10:36:00.000Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2018-07-26</time>
-</a>
-        </div>
-    	 
-  
-    <h1 itemprop="name">
-      <a class="archive-article-title" href="/2018/07/26/漫谈io复用和高性能服务框架/">漫谈io复用和高性能服务框架</a>
-    </h1>
-  
-
-        <div class="article-info info-on-right">
-          
-	<div class="article-tag tagcloud">
-		<i class="icon-price-tags icon"></i>
-		<ul class="article-tag-list">
-			 
-        		<li class="article-tag-list-item">
-        			<a href="javascript:void(0)" class="js-tag article-tag-list-link color4">多线程</a>
-        		</li>
-      		 
-        		<li class="article-tag-list-item">
-        			<a href="javascript:void(0)" class="js-tag article-tag-list-link color1">服务端编程</a>
-        		</li>
-      		
-		</ul>
-	</div>
-
-          
-
-        </div>
-        <div class="clearfix"></div>
-    </header>
-  </div>
-</article>
-  
-    
-    
-    <article class="archive-article archive-type-post">
-  <div class="archive-article-inner">
-    <header class="archive-article-header">
-      	<div class="article-meta">
-	      	<a href="/2018/07/20/浅析线程安全的对象生命期的管理/" class="archive-article-date">
-  	<time datetime="2018-07-20T10:36:00.000Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2018-07-20</time>
-</a>
-        </div>
-    	 
-  
-    <h1 itemprop="name">
-      <a class="archive-article-title" href="/2018/07/20/浅析线程安全的对象生命期的管理/">浅析线程安全的对象生命期的管理</a>
-    </h1>
-  
-
-        <div class="article-info info-on-right">
-          
-	<div class="article-tag tagcloud">
-		<i class="icon-price-tags icon"></i>
-		<ul class="article-tag-list">
-			 
-        		<li class="article-tag-list-item">
-        			<a href="javascript:void(0)" class="js-tag article-tag-list-link color4">多线程</a>
-        		</li>
-      		 
-        		<li class="article-tag-list-item">
-        			<a href="javascript:void(0)" class="js-tag article-tag-list-link color1">服务端编程</a>
-        		</li>
-      		
-		</ul>
-	</div>
-
-          
-
-        </div>
-        <div class="clearfix"></div>
-    </header>
-  </div>
-</article>
-  
-    
-    
-    <article class="archive-article archive-type-post">
-  <div class="archive-article-inner">
-    <header class="archive-article-header">
-      	<div class="article-meta">
-	      	<a href="/2018/07/18/ftp关键技术五-限制链接数/" class="archive-article-date">
-  	<time datetime="2018-07-18T13:30:00.000Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2018-07-18</time>
-</a>
-        </div>
-    	 
-  
-    <h1 itemprop="name">
-      <a class="archive-article-title" href="/2018/07/18/ftp关键技术五-限制链接数/">ftp关键技术五:限制链接数</a>
-    </h1>
-  
-
-        <div class="article-info info-on-right">
-          
-	<div class="article-tag tagcloud">
-		<i class="icon-price-tags icon"></i>
-		<ul class="article-tag-list">
-			 
-        		<li class="article-tag-list-item">
-        			<a href="javascript:void(0)" class="js-tag article-tag-list-link color4">FTP</a>
-        		</li>
-      		
-		</ul>
-	</div>
-
-          
-
-        </div>
-        <div class="clearfix"></div>
-    </header>
-  </div>
-</article>
-  
-    
-    
-    <article class="archive-article archive-type-post">
-  <div class="archive-article-inner">
-    <header class="archive-article-header">
-      	<div class="article-meta">
-	      	<a href="/2018/06/13/ftp关键技术四：空闲断开/" class="archive-article-date">
-  	<time datetime="2018-06-13T08:40:00.000Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2018-06-13</time>
-</a>
-        </div>
-    	 
-  
-    <h1 itemprop="name">
-      <a class="archive-article-title" href="/2018/06/13/ftp关键技术四：空闲断开/">ftp关键技术四：空闲断开</a>
-    </h1>
-  
-
-        <div class="article-info info-on-right">
-          
-	<div class="article-tag tagcloud">
-		<i class="icon-price-tags icon"></i>
-		<ul class="article-tag-list">
-			 
-        		<li class="article-tag-list-item">
-        			<a href="javascript:void(0)" class="js-tag article-tag-list-link color4">FTP</a>
-        		</li>
-      		
-		</ul>
-	</div>
-
-          
-
-        </div>
-        <div class="clearfix"></div>
-    </header>
-  </div>
-</article>
-  
-    
-    
-    <article class="archive-article archive-type-post">
-  <div class="archive-article-inner">
-    <header class="archive-article-header">
-      	<div class="article-meta">
-	      	<a href="/2018/06/10/ftp关键技术三：被动模式和主动模式/" class="archive-article-date">
-  	<time datetime="2018-06-10T02:40:00.000Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2018-06-10</time>
-</a>
-        </div>
-    	 
-  
-    <h1 itemprop="name">
-      <a class="archive-article-title" href="/2018/06/10/ftp关键技术三：被动模式和主动模式/">ftp关键技术三：被动模式和主动模式</a>
-    </h1>
-  
-
-        <div class="article-info info-on-right">
-          
-	<div class="article-tag tagcloud">
-		<i class="icon-price-tags icon"></i>
-		<ul class="article-tag-list">
-			 
-        		<li class="article-tag-list-item">
-        			<a href="javascript:void(0)" class="js-tag article-tag-list-link color4">FTP</a>
-        		</li>
-      		
-		</ul>
-	</div>
-
-          
-
-        </div>
-        <div class="clearfix"></div>
-    </header>
-  </div>
-</article>
-  
-    
-    
-    <article class="archive-article archive-type-post">
-  <div class="archive-article-inner">
-    <header class="archive-article-header">
-      	<div class="article-meta">
-	      	<a href="/2018/05/29/ftp关键技术二-nobody进程创建和使用（一）/" class="archive-article-date">
-  	<time datetime="2018-05-29T09:40:00.000Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2018-05-29</time>
-</a>
-        </div>
-    	 
-  
-    <h1 itemprop="name">
-      <a class="archive-article-title" href="/2018/05/29/ftp关键技术二-nobody进程创建和使用（一）/">ftp关键技术二:nobody进程创建和使用（一）</a>
-    </h1>
-  
-
-        <div class="article-info info-on-right">
-          
-	<div class="article-tag tagcloud">
-		<i class="icon-price-tags icon"></i>
-		<ul class="article-tag-list">
-			 
-        		<li class="article-tag-list-item">
-        			<a href="javascript:void(0)" class="js-tag article-tag-list-link color4">FTP</a>
-        		</li>
-      		
-		</ul>
-	</div>
-
-          
-
-        </div>
-        <div class="clearfix"></div>
-    </header>
-  </div>
-</article>
-  
-    
-    
-    <article class="archive-article archive-type-post">
-  <div class="archive-article-inner">
-    <header class="archive-article-header">
-      	<div class="article-meta">
-	      	<a href="/2018/05/24/ftp关键技术二-nobody进程创建和使用（二）/" class="archive-article-date">
-  	<time datetime="2018-05-24T11:40:00.000Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2018-05-24</time>
-</a>
-        </div>
-    	 
-  
-    <h1 itemprop="name">
-      <a class="archive-article-title" href="/2018/05/24/ftp关键技术二-nobody进程创建和使用（二）/">ftp关键技术二:nobody进程创建和使用（二）</a>
-    </h1>
-  
-
-        <div class="article-info info-on-right">
-          
-	<div class="article-tag tagcloud">
-		<i class="icon-price-tags icon"></i>
-		<ul class="article-tag-list">
-			 
-        		<li class="article-tag-list-item">
-        			<a href="javascript:void(0)" class="js-tag article-tag-list-link color4">FTP</a>
-        		</li>
-      		
-		</ul>
-	</div>
-
-          
-
-        </div>
-        <div class="clearfix"></div>
-    </header>
-  </div>
-</article>
-  
-    
-    
-    <article class="archive-article archive-type-post">
-  <div class="archive-article-inner">
-    <header class="archive-article-header">
-      	<div class="article-meta">
-	      	<a href="/2018/05/20/ftp关键技术一-账户验证/" class="archive-article-date">
-  	<time datetime="2018-05-20T08:40:00.000Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2018-05-20</time>
-</a>
-        </div>
-    	 
-  
-    <h1 itemprop="name">
-      <a class="archive-article-title" href="/2018/05/20/ftp关键技术一-账户验证/">ftp关键技术一:账户验证</a>
-    </h1>
-  
-
-        <div class="article-info info-on-right">
-          
-	<div class="article-tag tagcloud">
-		<i class="icon-price-tags icon"></i>
-		<ul class="article-tag-list">
-			 
-        		<li class="article-tag-list-item">
-        			<a href="javascript:void(0)" class="js-tag article-tag-list-link color4">FTP</a>
-        		</li>
-      		
-		</ul>
-	</div>
-
-          
-
-        </div>
-        <div class="clearfix"></div>
-    </header>
-  </div>
-</article>
-  
-  
-    </div></section>
-  
-
-    
 
 
           </div>
@@ -690,8 +391,8 @@
 	var yiliaConfig = {
 		mathjax: false,
 		isHome: false,
-		isPost: false,
-		isArchive: true,
+		isPost: true,
+		isArchive: false,
 		isTag: false,
 		isCategory: false,
 		open_in_new: false,
