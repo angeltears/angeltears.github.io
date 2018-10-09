@@ -144,6 +144,154 @@
           <div id="js-content" class="content-ll">
             
   
+    <article id="post-traker服务搭建" class="article article-type-post  article-index" itemscope itemprop="blogPost">
+  <div class="article-inner">
+    
+      <header class="article-header">
+        
+  
+    <h1 itemprop="name">
+      <a class="article-title" href="/2018/10/09/traker服务搭建/">tarker服务搭建</a>
+    </h1>
+  
+
+        
+        <a href="/2018/10/09/traker服务搭建/" class="archive-article-date">
+  	<time datetime="2018-10-09T08:40:00.000Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2018-10-09</time>
+</a>
+        
+      </header>
+    
+    <div class="article-entry" itemprop="articleBody">
+      
+        <hr>
+<h5 id="tarker服务有那些组成"><a href="#tarker服务有那些组成" class="headerlink" title="tarker服务有那些组成"></a>tarker服务有那些组成</h5><p>​    一般来说，搭建一个tarker服务器，只需要一个BitTorrent Tracker就可以了，但是如果想用web浏览器发布BT种子，就需要做一个Web页面，让用户可以从这个页面下载种子，然后用BT客户端可以下载文件。 </p>
+<h5 id="搭建过程-ubtuntu篇"><a href="#搭建过程-ubtuntu篇" class="headerlink" title="搭建过程(ubtuntu篇)"></a>搭建过程(ubtuntu篇)</h5><p>​    以下所有命令都必须拥有root权限或者sudo</p>
+<p>​    1.安装bittorrent    </p>
+<figure class="highlight powershell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">$　apt-get install bittorrent</span><br></pre></td></tr></table></figure>
+<p>​    ２.安装Apache</p>
+<figure class="highlight powershell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">$　apt-get install apache2</span><br></pre></td></tr></table></figure>
+<p>​    3.配置apache服务器</p>
+<figure class="highlight powershell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">$　cd /etc/apache2/mods-available </span><br><span class="line">$　vim mime.conf</span><br></pre></td></tr></table></figure>
+<p>​    将这一段追加到合适的位置</p>
+<figure class="highlight powershell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">AddType application/x-bittorrent .torrent</span><br></pre></td></tr></table></figure>
+<p>​    注意中间有空格</p>
+<p>​    4.在Web主目录下建立bt用文件夹</p>
+<figure class="highlight powershell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">$　mkdir /var/www/html/bt/</span><br></pre></td></tr></table></figure>
+<p>​    5.上传共享文件到bt用文件夹 </p>
+<figure class="highlight powershell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">	$　tree bt</span><br><span class="line">bt/</span><br><span class="line">└── miniftp</span><br><span class="line">    └── miniftpd.avi</span><br></pre></td></tr></table></figure>
+<p>​    6.制作种子文件</p>
+<figure class="highlight powershell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">$ ls</span><br><span class="line">miniftp</span><br><span class="line">$　btmakemetafile miniftp http://<span class="number">127.0</span>.<span class="number">0.1</span>:<span class="number">6969</span>/announce </span><br><span class="line">$ ls</span><br><span class="line">miniftp  miniftp.torrent</span><br></pre></td></tr></table></figure>
+<p>​    7.开启Traker服务</p>
+<figure class="highlight powershell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">$ bttrack --port <span class="number">6969</span> --dfile /tmp/dfile &gt;/tmp/bt.log &amp;</span><br></pre></td></tr></table></figure>
+<p>​    8.服务器做种 </p>
+<figure class="highlight powershell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">$ btlaunchmany ./ &gt; /dev/null &amp;</span><br></pre></td></tr></table></figure>
+<p>​    9.开启Apache</p>
+<figure class="highlight powershell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">$ service apacha2 start</span><br></pre></td></tr></table></figure>
+<p>​    10.查看种子信息</p>
+<p>​    web浏览器访问127.0.0.1:6969就可以看到种子信息</p>
+<blockquote>
+<h3 id="BitTorrent-download-info"><a href="#BitTorrent-download-info" class="headerlink" title="BitTorrent download info"></a>BitTorrent download info</h3><ul>
+<li><strong>tracker version:</strong> 3.4.2</li>
+<li><strong>server time:</strong> 2018-10-09 08:55 UTC</li>
+</ul>
+<table>
+<thead>
+<tr>
+<th>info hash</th>
+<th>complete</th>
+<th>downloading</th>
+<th>downloaded</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>2b1f84af0821c2240fe2de6cc76081836905684d</code></td>
+<td><code>1</code></td>
+<td><code>0</code></td>
+<td><code>0</code></td>
+</tr>
+<tr>
+<td>0 files</td>
+<td>1/1</td>
+<td>0/0</td>
+<td>0/0</td>
+</tr>
+</tbody>
+</table>
+<ul>
+<li><em>info hash:</em> SHA1 hash of the “info” section of the metainfo (*.torrent)</li>
+<li><em>complete:</em> number of connected clients with the complete file (total: unique IPs/total connections)</li>
+<li><em>downloading:</em> number of connected clients still downloading (total: unique IPs/total connections)</li>
+<li><em>downloaded:</em> reported complete downloads (total: current/all)</li>
+<li><em>transferred:</em> torrent size * total downloaded (does not include partial transfers)</li>
+</ul>
+</blockquote>
+<h5 id="搭建过程-centos篇"><a href="#搭建过程-centos篇" class="headerlink" title="搭建过程(centos篇)"></a>搭建过程(centos篇)</h5><p>　    1.安装BitTorrent</p>
+<p>​    你可以到 <a href="http://bitconjurer.org/BitTorrent/download.html" target="_blank" rel="noopener">http://bitconjurer.org/BitTorrent/download.html</a> 去下载最新的*nux下用的tar 或zip 包，然后进行安装，不过4.0版本以上发生了变化，推荐3.4.２版本</p>
+<p>​    2.制作发布文件</p>
+<figure class="highlight powershell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">$ ./btmakemetafile.py /文件地址 http://IP:<span class="number">6969</span>/announce</span><br></pre></td></tr></table></figure>
+<p>​    ３.启动trakert服务</p>
+<figure class="highlight powershell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">$ ./bttrack.py --port <span class="number">6969</span> --dfile dstate &gt;&gt;/var/log/bttrack.log</span><br></pre></td></tr></table></figure>
+<p>​    ４.生成种子文件</p>
+<figure class="highlight powershell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">$ ./btdownloadheadless.py --max_allow_in <span class="number">20</span> --max_upload_rate <span class="number">500</span> --minport <span class="number">6888</span> --maxport <span class="number">6888</span> /种子地址--saveas /文件地址</span><br></pre></td></tr></table></figure>
+
+      
+
+      
+    </div>
+    <div class="article-info article-info-index">
+      
+      
+	<div class="article-tag tagcloud">
+		<i class="icon-price-tags icon"></i>
+		<ul class="article-tag-list">
+			 
+        		<li class="article-tag-list-item">
+        			<a href="javascript:void(0)" class="js-tag article-tag-list-link color3">BT</a>
+        		</li>
+      		 
+        		<li class="article-tag-list-item">
+        			<a href="javascript:void(0)" class="js-tag article-tag-list-link color5">运维相关</a>
+        		</li>
+      		
+		</ul>
+	</div>
+
+      
+
+      
+        <p class="article-more-link">
+          <a class="article-more-a" href="/2018/10/09/traker服务搭建/">展开全文 >></a>
+        </p>
+      
+
+      
+      <div class="clearfix"></div>
+    </div>
+  </div>
+</article>
+
+<aside class="wrap-side-operation">
+    <div class="mod-side-operation">
+        
+        <div class="jump-container" id="js-jump-container" style="display:none;">
+            <a href="javascript:void(0)" class="mod-side-operation__jump-to-top">
+                <i class="icon-font icon-back"></i>
+            </a>
+            <div id="js-jump-plan-container" class="jump-plan-container" style="top: -11px;">
+                <i class="icon-font icon-plane jump-plane"></i>
+            </div>
+        </div>
+        
+        
+    </div>
+</aside>
+
+
+
+
+  
     <article id="post-libevent源码分析3" class="article article-type-post  article-index" itemscope itemprop="blogPost">
   <div class="article-inner">
     
@@ -800,98 +948,6 @@
 
 
   
-    <article id="post-浅析线程安全的对象生命期的管理" class="article article-type-post  article-index" itemscope itemprop="blogPost">
-  <div class="article-inner">
-    
-      <header class="article-header">
-        
-  
-    <h1 itemprop="name">
-      <a class="article-title" href="/2018/07/20/浅析线程安全的对象生命期的管理/">浅析线程安全的对象生命期的管理</a>
-    </h1>
-  
-
-        
-        <a href="/2018/07/20/浅析线程安全的对象生命期的管理/" class="archive-article-date">
-  	<time datetime="2018-07-20T10:36:00.000Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2018-07-20</time>
-</a>
-        
-      </header>
-    
-    <div class="article-entry" itemprop="articleBody">
-      
-        <p><strong>1.前言：c++与其他面向对象语言不同，没有gc，c++要求程序员自己管理对象的生命，在并发编程环境下显得尤为困难。当一个对象能被多个线程同时看到时，那么对象的销毁时机就会变得模糊不清，可能出现多种竞争条件（race condition):</strong></p>
-<ul>
-<li>在即将析构一个对象时，从何知道别的线程是否正在执行该对象的成员。</li>
-<li>如何保证在执行成员的函数期间，对象不会被另一个线程析构。</li>
-<li>在调用某个成员函数之前，如何得知这个对象是否还活着？它的析构函数会不会碰巧执行到一半？</li>
-</ul>
-<p><strong>2.线程安全的定义</strong></p>
-<p>​    当多个线程访问某个类时，不管运行时环境采用何种调度方式或者这些线程将如何交替执行，并且在主调代码中不需要任何额外的同步或协同，这个类都能表现出正确的行为，那么这个类就是线程安全的。</p>
-<p><strong>3.实现一个简单的线程安全的计算类counter</strong></p>
-<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">//program 1.1.cpp</span></span><br><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">Counter</span>:</span> boost::noncopyable</span><br><span class="line">&#123;</span><br><span class="line"><span class="keyword">public</span>:</span><br><span class="line">    Counter() = <span class="keyword">default</span>;</span><br><span class="line">    <span class="keyword">int64_t</span> value() <span class="keyword">const</span>;</span><br><span class="line">    <span class="keyword">int64_t</span> getAndIncrease();</span><br><span class="line"><span class="keyword">private</span>:</span><br><span class="line">    <span class="keyword">int64_t</span> value_ = <span class="number">0</span>;</span><br><span class="line">    <span class="keyword">mutable</span> MutexLock mutex_;</span><br><span class="line">&#125;;</span><br><span class="line"><span class="keyword">int64_t</span> Counter::value() <span class="keyword">const</span></span><br><span class="line">&#123;</span><br><span class="line">    <span class="function">MutexLockGuard <span class="title">lock</span><span class="params">(mutex_)</span></span>;</span><br><span class="line">    <span class="keyword">return</span> value_;</span><br><span class="line">&#125;</span><br><span class="line"><span class="keyword">int64_t</span> Counter::getAndIncrease()</span><br><span class="line">&#123;</span><br><span class="line">    <span class="function">MutexLockGuard <span class="title">lock</span><span class="params">(mutex_)</span></span>;</span><br><span class="line">    <span class="keyword">int64_t</span> ret = value_++;</span><br><span class="line">    <span class="keyword">return</span> ret;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<p>​    因为每个counter对象都有自己的mutex_，因此不存在锁争用。而且由于lock的析构会晚于返回对象的构造，因此可以有效保护这个共享数据。</p>
-<p>​    如果mutex_的类型是static，则会导致每个对象拥有相同的mutex，会导致锁争用。</p>
-<p>​    如果counter是动态创建的并通过指针访问的话，在多线程中，可能两个以上线程都会持有counter对象的指针，因此会出现销毁时候的race condition。</p>
-        
-          <a class="article-more-a" href="/2018/07/20/浅析线程安全的对象生命期的管理/#more">more >></a>
-        
-      
-
-      
-    </div>
-    <div class="article-info article-info-index">
-      
-      
-	<div class="article-tag tagcloud">
-		<i class="icon-price-tags icon"></i>
-		<ul class="article-tag-list">
-			 
-        		<li class="article-tag-list-item">
-        			<a href="javascript:void(0)" class="js-tag article-tag-list-link color4">多线程</a>
-        		</li>
-      		 
-        		<li class="article-tag-list-item">
-        			<a href="javascript:void(0)" class="js-tag article-tag-list-link color1">服务端编程</a>
-        		</li>
-      		
-		</ul>
-	</div>
-
-      
-
-      
-        <p class="article-more-link">
-          <a class="article-more-a" href="/2018/07/20/浅析线程安全的对象生命期的管理/">展开全文 >></a>
-        </p>
-      
-
-      
-      <div class="clearfix"></div>
-    </div>
-  </div>
-</article>
-
-<aside class="wrap-side-operation">
-    <div class="mod-side-operation">
-        
-        <div class="jump-container" id="js-jump-container" style="display:none;">
-            <a href="javascript:void(0)" class="mod-side-operation__jump-to-top">
-                <i class="icon-font icon-back"></i>
-            </a>
-            <div id="js-jump-plan-container" class="jump-plan-container" style="top: -11px;">
-                <i class="icon-font icon-plane jump-plane"></i>
-            </div>
-        </div>
-        
-        
-    </div>
-</aside>
-
-
-
-
-  
   
     <nav id="page-nav">
       <span class="page-number current">1</span><a class="page-number" href="/page/2/">2</a><a class="extend next" rel="next" href="/page/2/">Next &raquo;</a>
@@ -998,6 +1054,14 @@ return o(i(t),arguments.length<2?void 0:u(arguments[1]))}})},function(t,n,r){var
              
               <li class="article-tag-list-item">
                 <a href="javascript:void(0)" class="js-tag color1">服务端编程</a>
+              </li>
+             
+              <li class="article-tag-list-item">
+                <a href="javascript:void(0)" class="js-tag color3">BT</a>
+              </li>
+             
+              <li class="article-tag-list-item">
+                <a href="javascript:void(0)" class="js-tag color5">运维相关</a>
               </li>
             
             <div class="clearfix"></div>

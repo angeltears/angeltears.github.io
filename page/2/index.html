@@ -144,6 +144,98 @@
           <div id="js-content" class="content-ll">
             
   
+    <article id="post-浅析线程安全的对象生命期的管理" class="article article-type-post  article-index" itemscope itemprop="blogPost">
+  <div class="article-inner">
+    
+      <header class="article-header">
+        
+  
+    <h1 itemprop="name">
+      <a class="article-title" href="/2018/07/20/浅析线程安全的对象生命期的管理/">浅析线程安全的对象生命期的管理</a>
+    </h1>
+  
+
+        
+        <a href="/2018/07/20/浅析线程安全的对象生命期的管理/" class="archive-article-date">
+  	<time datetime="2018-07-20T10:36:00.000Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2018-07-20</time>
+</a>
+        
+      </header>
+    
+    <div class="article-entry" itemprop="articleBody">
+      
+        <p><strong>1.前言：c++与其他面向对象语言不同，没有gc，c++要求程序员自己管理对象的生命，在并发编程环境下显得尤为困难。当一个对象能被多个线程同时看到时，那么对象的销毁时机就会变得模糊不清，可能出现多种竞争条件（race condition):</strong></p>
+<ul>
+<li>在即将析构一个对象时，从何知道别的线程是否正在执行该对象的成员。</li>
+<li>如何保证在执行成员的函数期间，对象不会被另一个线程析构。</li>
+<li>在调用某个成员函数之前，如何得知这个对象是否还活着？它的析构函数会不会碰巧执行到一半？</li>
+</ul>
+<p><strong>2.线程安全的定义</strong></p>
+<p>​    当多个线程访问某个类时，不管运行时环境采用何种调度方式或者这些线程将如何交替执行，并且在主调代码中不需要任何额外的同步或协同，这个类都能表现出正确的行为，那么这个类就是线程安全的。</p>
+<p><strong>3.实现一个简单的线程安全的计算类counter</strong></p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">//program 1.1.cpp</span></span><br><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">Counter</span>:</span> boost::noncopyable</span><br><span class="line">&#123;</span><br><span class="line"><span class="keyword">public</span>:</span><br><span class="line">    Counter() = <span class="keyword">default</span>;</span><br><span class="line">    <span class="keyword">int64_t</span> value() <span class="keyword">const</span>;</span><br><span class="line">    <span class="keyword">int64_t</span> getAndIncrease();</span><br><span class="line"><span class="keyword">private</span>:</span><br><span class="line">    <span class="keyword">int64_t</span> value_ = <span class="number">0</span>;</span><br><span class="line">    <span class="keyword">mutable</span> MutexLock mutex_;</span><br><span class="line">&#125;;</span><br><span class="line"><span class="keyword">int64_t</span> Counter::value() <span class="keyword">const</span></span><br><span class="line">&#123;</span><br><span class="line">    <span class="function">MutexLockGuard <span class="title">lock</span><span class="params">(mutex_)</span></span>;</span><br><span class="line">    <span class="keyword">return</span> value_;</span><br><span class="line">&#125;</span><br><span class="line"><span class="keyword">int64_t</span> Counter::getAndIncrease()</span><br><span class="line">&#123;</span><br><span class="line">    <span class="function">MutexLockGuard <span class="title">lock</span><span class="params">(mutex_)</span></span>;</span><br><span class="line">    <span class="keyword">int64_t</span> ret = value_++;</span><br><span class="line">    <span class="keyword">return</span> ret;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>​    因为每个counter对象都有自己的mutex_，因此不存在锁争用。而且由于lock的析构会晚于返回对象的构造，因此可以有效保护这个共享数据。</p>
+<p>​    如果mutex_的类型是static，则会导致每个对象拥有相同的mutex，会导致锁争用。</p>
+<p>​    如果counter是动态创建的并通过指针访问的话，在多线程中，可能两个以上线程都会持有counter对象的指针，因此会出现销毁时候的race condition。</p>
+        
+          <a class="article-more-a" href="/2018/07/20/浅析线程安全的对象生命期的管理/#more">more >></a>
+        
+      
+
+      
+    </div>
+    <div class="article-info article-info-index">
+      
+      
+	<div class="article-tag tagcloud">
+		<i class="icon-price-tags icon"></i>
+		<ul class="article-tag-list">
+			 
+        		<li class="article-tag-list-item">
+        			<a href="javascript:void(0)" class="js-tag article-tag-list-link color4">多线程</a>
+        		</li>
+      		 
+        		<li class="article-tag-list-item">
+        			<a href="javascript:void(0)" class="js-tag article-tag-list-link color1">服务端编程</a>
+        		</li>
+      		
+		</ul>
+	</div>
+
+      
+
+      
+        <p class="article-more-link">
+          <a class="article-more-a" href="/2018/07/20/浅析线程安全的对象生命期的管理/">展开全文 >></a>
+        </p>
+      
+
+      
+      <div class="clearfix"></div>
+    </div>
+  </div>
+</article>
+
+<aside class="wrap-side-operation">
+    <div class="mod-side-operation">
+        
+        <div class="jump-container" id="js-jump-container" style="display:none;">
+            <a href="javascript:void(0)" class="mod-side-operation__jump-to-top">
+                <i class="icon-font icon-back"></i>
+            </a>
+            <div id="js-jump-plan-container" class="jump-plan-container" style="top: -11px;">
+                <i class="icon-font icon-plane jump-plane"></i>
+            </div>
+        </div>
+        
+        
+    </div>
+</aside>
+
+
+
+
+  
     <article id="post-ftp关键技术五-限制链接数" class="article article-type-post  article-index" itemscope itemprop="blogPost">
   <div class="article-inner">
     
@@ -759,6 +851,14 @@ return o(i(t),arguments.length<2?void 0:u(arguments[1]))}})},function(t,n,r){var
              
               <li class="article-tag-list-item">
                 <a href="javascript:void(0)" class="js-tag color1">服务端编程</a>
+              </li>
+             
+              <li class="article-tag-list-item">
+                <a href="javascript:void(0)" class="js-tag color3">BT</a>
+              </li>
+             
+              <li class="article-tag-list-item">
+                <a href="javascript:void(0)" class="js-tag color5">运维相关</a>
               </li>
             
             <div class="clearfix"></div>
