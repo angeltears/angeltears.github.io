@@ -144,6 +144,87 @@
           <div id="js-content" class="content-ll">
             
   
+    <article id="post-muduo源码学习笔记-4" class="article article-type-post  article-index" itemscope itemprop="blogPost">
+  <div class="article-inner">
+    
+      <header class="article-header">
+        
+  
+    <h1 itemprop="name">
+      <a class="article-title" href="/2018/10/25/muduo源码学习笔记-4/">muduo源码学习笔记(3)</a>
+    </h1>
+  
+
+        
+        <a href="/2018/10/25/muduo源码学习笔记-4/" class="archive-article-date">
+  	<time datetime="2018-10-25T10:36:00.000Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2018-10-25</time>
+</a>
+        
+      </header>
+    
+    <div class="article-entry" itemprop="articleBody">
+      
+        <h5 id="无界队列"><a href="#无界队列" class="headerlink" title="无界队列"></a>无界队列</h5><p>​    什么是无界队列？指的是没有设置固定大小的队列。这些队列可以直接入列，直至溢出。用消费者生产者模型举例，生产者可以向仓库添加数据无须关心仓库是否已空，消费者在判断仓库已空时要等待生产者的生产并通知。</p>
+<p>​    可以看出我们在实现无界队列的时候，需要关注一个事件，就是仓库已空的事件，所以我们需要一个信号量，另外为了保证不产生race condition，我们需要一个全局的锁，在消费者判断仓库是否为空取得产品的时候加以保护。</p>
+        
+          <a class="article-more-a" href="/2018/10/25/muduo源码学习笔记-4/#more">more >></a>
+        
+      
+
+      
+    </div>
+    <div class="article-info article-info-index">
+      
+      
+	<div class="article-tag tagcloud">
+		<i class="icon-price-tags icon"></i>
+		<ul class="article-tag-list">
+			 
+        		<li class="article-tag-list-item">
+        			<a href="javascript:void(0)" class="js-tag article-tag-list-link color4">多线程</a>
+        		</li>
+      		 
+        		<li class="article-tag-list-item">
+        			<a href="javascript:void(0)" class="js-tag article-tag-list-link color1">muduo</a>
+        		</li>
+      		
+		</ul>
+	</div>
+
+      
+
+      
+        <p class="article-more-link">
+          <a class="article-more-a" href="/2018/10/25/muduo源码学习笔记-4/">展开全文 >></a>
+        </p>
+      
+
+      
+      <div class="clearfix"></div>
+    </div>
+  </div>
+</article>
+
+<aside class="wrap-side-operation">
+    <div class="mod-side-operation">
+        
+        <div class="jump-container" id="js-jump-container" style="display:none;">
+            <a href="javascript:void(0)" class="mod-side-operation__jump-to-top">
+                <i class="icon-font icon-back"></i>
+            </a>
+            <div id="js-jump-plan-container" class="jump-plan-container" style="top: -11px;">
+                <i class="icon-font icon-plane jump-plane"></i>
+            </div>
+        </div>
+        
+        
+    </div>
+</aside>
+
+
+
+
+  
     <article id="post-traker服务搭建" class="article article-type-post  article-index" itemscope itemprop="blogPost">
   <div class="article-inner">
     
@@ -466,6 +547,98 @@
 
 
   
+    <article id="post-muduo源码学习笔记-2" class="article article-type-post  article-index" itemscope itemprop="blogPost">
+  <div class="article-inner">
+    
+      <header class="article-header">
+        
+  
+    <h1 itemprop="name">
+      <a class="article-title" href="/2018/09/12/muduo源码学习笔记-2/">muduo源码学习笔记(2)</a>
+    </h1>
+  
+
+        
+        <a href="/2018/09/12/muduo源码学习笔记-2/" class="archive-article-date">
+  	<time datetime="2018-09-12T10:36:00.000Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2018-09-12</time>
+</a>
+        
+      </header>
+    
+    <div class="article-entry" itemprop="articleBody">
+      
+        <p>前言：</p>
+<p>​    对于muduo库，我觉得，光Linux多线程上提到的一些实现，还是不够的，在base/里面，还有/net里面提供了很多不错的实现，值得去学习，暑假算是看看muduo的百分之八十的源码，并对其进行了一次实现，（剩下的在最近总结的时候，也会开始看看，并实现一遍），对于muduo库，简单谈谈自己对其实现的理解。</p>
+<h5 id="日志缓存流LogStream"><a href="#日志缓存流LogStream" class="headerlink" title="日志缓存流LogStream"></a>日志缓存流LogStream</h5><p>​    在muduo实现的基础日志类，一共用来三个文件，LogFilem, LogStream,Loggin。本着自底向上原则，我们从底层的实现慢慢讲起。</p>
+<p>​    在LogStream中，定义了三个类，两个底层的类分别是FixedBuffer和Fmt。</p>
+<p>​    muduo在实现写日志的时候，并没有直接写向stderr或者IO流，而是会写入自己定义的FixedBuffer(缓冲流中)，下面就让我们看看缓冲流的定义和实现吧!</p>
+<p><img src="/photo/FixedBuffer.png" alt="FixedBuffer类图"></p>
+<p>​    FixedBuffer定义在namespace detail算是用户不可见,在创建FixedBuffer的时候可以向其输出大小来控制内部的buf的大小，也定义两个常量分别对应大小buf</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">const</span> <span class="keyword">int</span> kSmallBuffer = <span class="number">4000</span>;</span><br><span class="line"><span class="keyword">const</span> <span class="keyword">int</span> kLargeBuffer = <span class="number">4000</span> * <span class="number">1024</span>;</span><br></pre></td></tr></table></figure>
+<p>​    一共有三个成员，data_就是缓存的数据，cur_指向缓存数据的末尾的下一个和cookie_指针</p>
+<p>​    我们需要重点关注以下函数</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line">　<span class="comment">//追加字符串  </span></span><br><span class="line">　<span class="function"><span class="keyword">void</span> <span class="title">append</span><span class="params">(<span class="keyword">const</span> <span class="keyword">char</span>* <span class="comment">/*restrict*/</span> buf, <span class="keyword">size_t</span> len)</span></span></span><br><span class="line"><span class="function"> </span>&#123;</span><br><span class="line">   <span class="comment">// <span class="doctag">FIXME:</span> append partially</span></span><br><span class="line"><span class="keyword">if</span> (implicit_cast&lt;<span class="keyword">size_t</span>&gt;(avail()) &gt; len)</span><br><span class="line">   &#123;</span><br><span class="line">     <span class="built_in">memcpy</span>(cur_, buf, len);</span><br><span class="line">     cur_ += len;</span><br><span class="line">   &#125;</span><br><span class="line"> &#125;</span><br><span class="line">　<span class="comment">//设置缓存</span></span><br><span class="line"> void setCookie(void (*cookie)())</span><br><span class="line"> &#123; cookie_ = cookie; &#125;;</span><br></pre></td></tr></table></figure>
+<p>​    值得注意的是下面在实现转化的时候在detail中定义了</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">const</span> <span class="keyword">char</span> digits[] = <span class="string">"9876543210123456789"</span>;</span><br><span class="line"><span class="keyword">const</span> <span class="keyword">char</span>* zero = digits + <span class="number">9</span>;</span><br><span class="line">BOOST_STATIC_ASSERT(<span class="keyword">sizeof</span>(digits) == <span class="number">20</span>);</span><br><span class="line"></span><br><span class="line"><span class="keyword">const</span> <span class="keyword">char</span> digitsHex[] = <span class="string">"0123456789ABCDEF"</span>;</span><br><span class="line">BOOST_STATIC_ASSERT(<span class="keyword">sizeof</span> digitsHex == <span class="number">17</span>);</span><br><span class="line"></span><br><span class="line"><span class="comment">// 先用求余除法求出　value转化成字符串的倒着顺序的，然后用std::reverse对其进行倒转</span></span><br><span class="line"><span class="comment">//　另一方面用了取数的方法，相比直接申请赋值会更有效率一些</span></span><br><span class="line"><span class="keyword">template</span>&lt;<span class="keyword">typename</span> T&gt;</span><br><span class="line"><span class="keyword">size_t</span> convert(<span class="keyword">char</span> buf[], T value)</span><br><span class="line">&#123;</span><br><span class="line">  T i = value;</span><br><span class="line">  <span class="keyword">char</span>* p = buf;</span><br><span class="line"></span><br><span class="line">  <span class="keyword">do</span></span><br><span class="line">  &#123;</span><br><span class="line">    <span class="keyword">int</span> lsd = <span class="keyword">static_cast</span>&lt;<span class="keyword">int</span>&gt;(i % <span class="number">10</span>);</span><br><span class="line">    i /= <span class="number">10</span>;</span><br><span class="line">    *p++ = zero[lsd];</span><br><span class="line">  &#125; <span class="keyword">while</span> (i != <span class="number">0</span>);</span><br><span class="line"></span><br><span class="line">  <span class="keyword">if</span> (value &lt; <span class="number">0</span>)</span><br><span class="line">  &#123;</span><br><span class="line">    *p++ = <span class="string">'-'</span>;</span><br><span class="line">  &#125;</span><br><span class="line">  *p = <span class="string">'\0'</span>;</span><br><span class="line">  <span class="built_in">std</span>::reverse(buf, p);      </span><br><span class="line"></span><br><span class="line">  <span class="keyword">return</span> p - buf;</span><br><span class="line">&#125;</span><br><span class="line"><span class="comment">/// 同样的实现不过是１６进制的而已</span></span><br><span class="line"><span class="keyword">size_t</span> convertHex(<span class="keyword">char</span> buf[], <span class="keyword">uintptr_t</span> value)；</span><br></pre></td></tr></table></figure>
+        
+          <a class="article-more-a" href="/2018/09/12/muduo源码学习笔记-2/#more">more >></a>
+        
+      
+
+      
+    </div>
+    <div class="article-info article-info-index">
+      
+      
+	<div class="article-tag tagcloud">
+		<i class="icon-price-tags icon"></i>
+		<ul class="article-tag-list">
+			 
+        		<li class="article-tag-list-item">
+        			<a href="javascript:void(0)" class="js-tag article-tag-list-link color4">多线程</a>
+        		</li>
+      		 
+        		<li class="article-tag-list-item">
+        			<a href="javascript:void(0)" class="js-tag article-tag-list-link color1">muduo</a>
+        		</li>
+      		
+		</ul>
+	</div>
+
+      
+
+      
+        <p class="article-more-link">
+          <a class="article-more-a" href="/2018/09/12/muduo源码学习笔记-2/">展开全文 >></a>
+        </p>
+      
+
+      
+      <div class="clearfix"></div>
+    </div>
+  </div>
+</article>
+
+<aside class="wrap-side-operation">
+    <div class="mod-side-operation">
+        
+        <div class="jump-container" id="js-jump-container" style="display:none;">
+            <a href="javascript:void(0)" class="mod-side-operation__jump-to-top">
+                <i class="icon-font icon-back"></i>
+            </a>
+            <div id="js-jump-plan-container" class="jump-plan-container" style="top: -11px;">
+                <i class="icon-font icon-plane jump-plane"></i>
+            </div>
+        </div>
+        
+        
+    </div>
+</aside>
+
+
+
+
+  
     <article id="post-muduo源码学习笔记-3" class="article article-type-post  article-index" itemscope itemprop="blogPost">
   <div class="article-inner">
     
@@ -572,98 +745,6 @@
       
         <p class="article-more-link">
           <a class="article-more-a" href="/2018/09/12/muduo源码学习笔记-3/">展开全文 >></a>
-        </p>
-      
-
-      
-      <div class="clearfix"></div>
-    </div>
-  </div>
-</article>
-
-<aside class="wrap-side-operation">
-    <div class="mod-side-operation">
-        
-        <div class="jump-container" id="js-jump-container" style="display:none;">
-            <a href="javascript:void(0)" class="mod-side-operation__jump-to-top">
-                <i class="icon-font icon-back"></i>
-            </a>
-            <div id="js-jump-plan-container" class="jump-plan-container" style="top: -11px;">
-                <i class="icon-font icon-plane jump-plane"></i>
-            </div>
-        </div>
-        
-        
-    </div>
-</aside>
-
-
-
-
-  
-    <article id="post-muduo源码学习笔记-2" class="article article-type-post  article-index" itemscope itemprop="blogPost">
-  <div class="article-inner">
-    
-      <header class="article-header">
-        
-  
-    <h1 itemprop="name">
-      <a class="article-title" href="/2018/09/12/muduo源码学习笔记-2/">muduo源码学习笔记(2)</a>
-    </h1>
-  
-
-        
-        <a href="/2018/09/12/muduo源码学习笔记-2/" class="archive-article-date">
-  	<time datetime="2018-09-12T10:36:00.000Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2018-09-12</time>
-</a>
-        
-      </header>
-    
-    <div class="article-entry" itemprop="articleBody">
-      
-        <p>前言：</p>
-<p>​    对于muduo库，我觉得，光Linux多线程上提到的一些实现，还是不够的，在base/里面，还有/net里面提供了很多不错的实现，值得去学习，暑假算是看看muduo的百分之八十的源码，并对其进行了一次实现，（剩下的在最近总结的时候，也会开始看看，并实现一遍），对于muduo库，简单谈谈自己对其实现的理解。</p>
-<h5 id="日志缓存流LogStream"><a href="#日志缓存流LogStream" class="headerlink" title="日志缓存流LogStream"></a>日志缓存流LogStream</h5><p>​    在muduo实现的基础日志类，一共用来三个文件，LogFilem, LogStream,Loggin。本着自底向上原则，我们从底层的实现慢慢讲起。</p>
-<p>​    在LogStream中，定义了三个类，两个底层的类分别是FixedBuffer和Fmt。</p>
-<p>​    muduo在实现写日志的时候，并没有直接写向stderr或者IO流，而是会写入自己定义的FixedBuffer(缓冲流中)，下面就让我们看看缓冲流的定义和实现吧!</p>
-<p><img src="/photo/FixedBuffer.png" alt="FixedBuffer类图"></p>
-<p>​    FixedBuffer定义在namespace detail算是用户不可见,在创建FixedBuffer的时候可以向其输出大小来控制内部的buf的大小，也定义两个常量分别对应大小buf</p>
-<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">const</span> <span class="keyword">int</span> kSmallBuffer = <span class="number">4000</span>;</span><br><span class="line"><span class="keyword">const</span> <span class="keyword">int</span> kLargeBuffer = <span class="number">4000</span> * <span class="number">1024</span>;</span><br></pre></td></tr></table></figure>
-<p>​    一共有三个成员，data_就是缓存的数据，cur_指向缓存数据的末尾的下一个和cookie_指针</p>
-<p>​    我们需要重点关注以下函数</p>
-<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line">　<span class="comment">//追加字符串  </span></span><br><span class="line">　<span class="function"><span class="keyword">void</span> <span class="title">append</span><span class="params">(<span class="keyword">const</span> <span class="keyword">char</span>* <span class="comment">/*restrict*/</span> buf, <span class="keyword">size_t</span> len)</span></span></span><br><span class="line"><span class="function"> </span>&#123;</span><br><span class="line">   <span class="comment">// <span class="doctag">FIXME:</span> append partially</span></span><br><span class="line"><span class="keyword">if</span> (implicit_cast&lt;<span class="keyword">size_t</span>&gt;(avail()) &gt; len)</span><br><span class="line">   &#123;</span><br><span class="line">     <span class="built_in">memcpy</span>(cur_, buf, len);</span><br><span class="line">     cur_ += len;</span><br><span class="line">   &#125;</span><br><span class="line"> &#125;</span><br><span class="line">　<span class="comment">//设置缓存</span></span><br><span class="line"> void setCookie(void (*cookie)())</span><br><span class="line"> &#123; cookie_ = cookie; &#125;;</span><br></pre></td></tr></table></figure>
-<p>​    值得注意的是下面在实现转化的时候在detail中定义了</p>
-<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">const</span> <span class="keyword">char</span> digits[] = <span class="string">"9876543210123456789"</span>;</span><br><span class="line"><span class="keyword">const</span> <span class="keyword">char</span>* zero = digits + <span class="number">9</span>;</span><br><span class="line">BOOST_STATIC_ASSERT(<span class="keyword">sizeof</span>(digits) == <span class="number">20</span>);</span><br><span class="line"></span><br><span class="line"><span class="keyword">const</span> <span class="keyword">char</span> digitsHex[] = <span class="string">"0123456789ABCDEF"</span>;</span><br><span class="line">BOOST_STATIC_ASSERT(<span class="keyword">sizeof</span> digitsHex == <span class="number">17</span>);</span><br><span class="line"></span><br><span class="line"><span class="comment">// 先用求余除法求出　value转化成字符串的倒着顺序的，然后用std::reverse对其进行倒转</span></span><br><span class="line"><span class="comment">//　另一方面用了取数的方法，相比直接申请赋值会更有效率一些</span></span><br><span class="line"><span class="keyword">template</span>&lt;<span class="keyword">typename</span> T&gt;</span><br><span class="line"><span class="keyword">size_t</span> convert(<span class="keyword">char</span> buf[], T value)</span><br><span class="line">&#123;</span><br><span class="line">  T i = value;</span><br><span class="line">  <span class="keyword">char</span>* p = buf;</span><br><span class="line"></span><br><span class="line">  <span class="keyword">do</span></span><br><span class="line">  &#123;</span><br><span class="line">    <span class="keyword">int</span> lsd = <span class="keyword">static_cast</span>&lt;<span class="keyword">int</span>&gt;(i % <span class="number">10</span>);</span><br><span class="line">    i /= <span class="number">10</span>;</span><br><span class="line">    *p++ = zero[lsd];</span><br><span class="line">  &#125; <span class="keyword">while</span> (i != <span class="number">0</span>);</span><br><span class="line"></span><br><span class="line">  <span class="keyword">if</span> (value &lt; <span class="number">0</span>)</span><br><span class="line">  &#123;</span><br><span class="line">    *p++ = <span class="string">'-'</span>;</span><br><span class="line">  &#125;</span><br><span class="line">  *p = <span class="string">'\0'</span>;</span><br><span class="line">  <span class="built_in">std</span>::reverse(buf, p);      </span><br><span class="line"></span><br><span class="line">  <span class="keyword">return</span> p - buf;</span><br><span class="line">&#125;</span><br><span class="line"><span class="comment">/// 同样的实现不过是１６进制的而已</span></span><br><span class="line"><span class="keyword">size_t</span> convertHex(<span class="keyword">char</span> buf[], <span class="keyword">uintptr_t</span> value)；</span><br></pre></td></tr></table></figure>
-        
-          <a class="article-more-a" href="/2018/09/12/muduo源码学习笔记-2/#more">more >></a>
-        
-      
-
-      
-    </div>
-    <div class="article-info article-info-index">
-      
-      
-	<div class="article-tag tagcloud">
-		<i class="icon-price-tags icon"></i>
-		<ul class="article-tag-list">
-			 
-        		<li class="article-tag-list-item">
-        			<a href="javascript:void(0)" class="js-tag article-tag-list-link color4">多线程</a>
-        		</li>
-      		 
-        		<li class="article-tag-list-item">
-        			<a href="javascript:void(0)" class="js-tag article-tag-list-link color1">muduo</a>
-        		</li>
-      		
-		</ul>
-	</div>
-
-      
-
-      
-        <p class="article-more-link">
-          <a class="article-more-a" href="/2018/09/12/muduo源码学习笔记-2/">展开全文 >></a>
         </p>
       
 
@@ -835,90 +916,6 @@
       
         <p class="article-more-link">
           <a class="article-more-a" href="/2018/09/03/muduo源码学习笔记-1/">展开全文 >></a>
-        </p>
-      
-
-      
-      <div class="clearfix"></div>
-    </div>
-  </div>
-</article>
-
-<aside class="wrap-side-operation">
-    <div class="mod-side-operation">
-        
-        <div class="jump-container" id="js-jump-container" style="display:none;">
-            <a href="javascript:void(0)" class="mod-side-operation__jump-to-top">
-                <i class="icon-font icon-back"></i>
-            </a>
-            <div id="js-jump-plan-container" class="jump-plan-container" style="top: -11px;">
-                <i class="icon-font icon-plane jump-plane"></i>
-            </div>
-        </div>
-        
-        
-    </div>
-</aside>
-
-
-
-
-  
-    <article id="post-漫谈io复用和高性能服务框架" class="article article-type-post  article-index" itemscope itemprop="blogPost">
-  <div class="article-inner">
-    
-      <header class="article-header">
-        
-  
-    <h1 itemprop="name">
-      <a class="article-title" href="/2018/07/26/漫谈io复用和高性能服务框架/">漫谈io复用和高性能服务框架</a>
-    </h1>
-  
-
-        
-        <a href="/2018/07/26/漫谈io复用和高性能服务框架/" class="archive-article-date">
-  	<time datetime="2018-07-26T10:36:00.000Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2018-07-26</time>
-</a>
-        
-      </header>
-    
-    <div class="article-entry" itemprop="articleBody">
-      
-        <p>​    前言：这篇博客可能会写的有点杂乱，毕竟是想到哪里写到哪里，至少算是一个总结性的文章。</p>
-<h3 id="一-IO复用的生"><a href="#一-IO复用的生" class="headerlink" title="一.IO复用的生"></a><strong>一.IO复用的生</strong></h3><p>​    首先我们先说说不用ＩＯ复用时，我们所谓的并发服务器的极限。简单的想，我们可以用一个线程来负责一个链接，但是线程个数又不是可以无限增大的，在简单的线程间的时间调度虽然可以说很廉价，但是廉价的东西乘以庞大的基数带来的结果是昂贵的。当不活跃的链接的占用了大部分，执行效率会变得更低。</p>
-<p>​    连接上的消息处理，可以分为两个阶段，即等待消息准备好和消息处理，当我们使用阻塞模型的时候，我们将这两个部分合二为一，从而一个链接只能捆绑一个链接，在需要的时候唤醒，不需要的时候睡眠。</p>
-<p>​    但是如果我们把等待消息准备好和消息处理分开，我们就不用频繁的唤醒和睡眠的进程，我们这时候也就需要一个线程，它的工作就是不断询问链接消息是否准备好，一旦准备好，它就将一个链接唤醒，直接创造/拿取一个线程对其进行消息的处理，进而可以减少时间调度和不活跃链接的代价。</p>
-<p>​    这就是IO多路复用了。多路复用就是处理等待消息准备好这件事的，但它可以同时处理多个连接！它也可能“等待”，所以它也会导致线程睡眠，然而这不要紧，因为它一对多、它可以监控所有连接。这样，当我们的线程被唤醒执行时，就一定是有一些连接准备好被我们的代码执行了，这是有效率的！没有那么多个线程都在争抢处理“等待消息准备好”阶段，整个世界终于清净了！</p>
-        
-          <a class="article-more-a" href="/2018/07/26/漫谈io复用和高性能服务框架/#more">more >></a>
-        
-      
-
-      
-    </div>
-    <div class="article-info article-info-index">
-      
-      
-	<div class="article-tag tagcloud">
-		<i class="icon-price-tags icon"></i>
-		<ul class="article-tag-list">
-			 
-        		<li class="article-tag-list-item">
-        			<a href="javascript:void(0)" class="js-tag article-tag-list-link color4">多线程</a>
-        		</li>
-      		 
-        		<li class="article-tag-list-item">
-        			<a href="javascript:void(0)" class="js-tag article-tag-list-link color1">服务端编程</a>
-        		</li>
-      		
-		</ul>
-	</div>
-
-      
-
-      
-        <p class="article-more-link">
-          <a class="article-more-a" href="/2018/07/26/漫谈io复用和高性能服务框架/">展开全文 >></a>
         </p>
       
 

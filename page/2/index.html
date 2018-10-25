@@ -144,6 +144,90 @@
           <div id="js-content" class="content-ll">
             
   
+    <article id="post-漫谈io复用和高性能服务框架" class="article article-type-post  article-index" itemscope itemprop="blogPost">
+  <div class="article-inner">
+    
+      <header class="article-header">
+        
+  
+    <h1 itemprop="name">
+      <a class="article-title" href="/2018/07/26/漫谈io复用和高性能服务框架/">漫谈io复用和高性能服务框架</a>
+    </h1>
+  
+
+        
+        <a href="/2018/07/26/漫谈io复用和高性能服务框架/" class="archive-article-date">
+  	<time datetime="2018-07-26T10:36:00.000Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2018-07-26</time>
+</a>
+        
+      </header>
+    
+    <div class="article-entry" itemprop="articleBody">
+      
+        <p>​    前言：这篇博客可能会写的有点杂乱，毕竟是想到哪里写到哪里，至少算是一个总结性的文章。</p>
+<h3 id="一-IO复用的生"><a href="#一-IO复用的生" class="headerlink" title="一.IO复用的生"></a><strong>一.IO复用的生</strong></h3><p>​    首先我们先说说不用ＩＯ复用时，我们所谓的并发服务器的极限。简单的想，我们可以用一个线程来负责一个链接，但是线程个数又不是可以无限增大的，在简单的线程间的时间调度虽然可以说很廉价，但是廉价的东西乘以庞大的基数带来的结果是昂贵的。当不活跃的链接的占用了大部分，执行效率会变得更低。</p>
+<p>​    连接上的消息处理，可以分为两个阶段，即等待消息准备好和消息处理，当我们使用阻塞模型的时候，我们将这两个部分合二为一，从而一个链接只能捆绑一个链接，在需要的时候唤醒，不需要的时候睡眠。</p>
+<p>​    但是如果我们把等待消息准备好和消息处理分开，我们就不用频繁的唤醒和睡眠的进程，我们这时候也就需要一个线程，它的工作就是不断询问链接消息是否准备好，一旦准备好，它就将一个链接唤醒，直接创造/拿取一个线程对其进行消息的处理，进而可以减少时间调度和不活跃链接的代价。</p>
+<p>​    这就是IO多路复用了。多路复用就是处理等待消息准备好这件事的，但它可以同时处理多个连接！它也可能“等待”，所以它也会导致线程睡眠，然而这不要紧，因为它一对多、它可以监控所有连接。这样，当我们的线程被唤醒执行时，就一定是有一些连接准备好被我们的代码执行了，这是有效率的！没有那么多个线程都在争抢处理“等待消息准备好”阶段，整个世界终于清净了！</p>
+        
+          <a class="article-more-a" href="/2018/07/26/漫谈io复用和高性能服务框架/#more">more >></a>
+        
+      
+
+      
+    </div>
+    <div class="article-info article-info-index">
+      
+      
+	<div class="article-tag tagcloud">
+		<i class="icon-price-tags icon"></i>
+		<ul class="article-tag-list">
+			 
+        		<li class="article-tag-list-item">
+        			<a href="javascript:void(0)" class="js-tag article-tag-list-link color4">多线程</a>
+        		</li>
+      		 
+        		<li class="article-tag-list-item">
+        			<a href="javascript:void(0)" class="js-tag article-tag-list-link color1">服务端编程</a>
+        		</li>
+      		
+		</ul>
+	</div>
+
+      
+
+      
+        <p class="article-more-link">
+          <a class="article-more-a" href="/2018/07/26/漫谈io复用和高性能服务框架/">展开全文 >></a>
+        </p>
+      
+
+      
+      <div class="clearfix"></div>
+    </div>
+  </div>
+</article>
+
+<aside class="wrap-side-operation">
+    <div class="mod-side-operation">
+        
+        <div class="jump-container" id="js-jump-container" style="display:none;">
+            <a href="javascript:void(0)" class="mod-side-operation__jump-to-top">
+                <i class="icon-font icon-back"></i>
+            </a>
+            <div id="js-jump-plan-container" class="jump-plan-container" style="top: -11px;">
+                <i class="icon-font icon-plane jump-plane"></i>
+            </div>
+        </div>
+        
+        
+    </div>
+</aside>
+
+
+
+
+  
     <article id="post-浅析线程安全的对象生命期的管理" class="article article-type-post  article-index" itemscope itemprop="blogPost">
   <div class="article-inner">
     

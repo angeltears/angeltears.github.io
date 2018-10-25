@@ -6,20 +6,20 @@
   <meta name="renderer" content="webkit">
   <meta http-equiv="X-UA-Compatible" content="IE=edge" >
   <link rel="dns-prefetch" href="https://justsolitude.com">
-  <title>tarker服务搭建 | Solitude</title>
+  <title>muduo源码学习笔记(3) | Solitude</title>
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
-  <meta name="description" content="tarker服务有那些组成​    一般来说，搭建一个tarker服务器，只需要一个BitTorrent Tracker就可以了，但是如果想用web浏览器发布BT种子，就需要做一个Web页面，让用户可以从这个页面下载种子，然后用BT客户端可以下载文件。  搭建过程(ubtuntu篇)​    以下所有命令都必须拥有root权限或者sudo ​    1.安装bittorrent     1$　a">
-<meta name="keywords" content="BT,运维相关">
+  <meta name="description" content="无界队列​    什么是无界队列？指的是没有设置固定大小的队列。这些队列可以直接入列，直至溢出。用消费者生产者模型举例，生产者可以向仓库添加数据无须关心仓库是否已空，消费者在判断仓库已空时要等待生产者的生产并通知。 ​    可以看出我们在实现无界队列的时候，需要关注一个事件，就是仓库已空的事件，所以我们需要一个信号量，另外为了保证不产生race condition，我们需要一个全局的锁，在消费者">
+<meta name="keywords" content="多线程,muduo">
 <meta property="og:type" content="article">
-<meta property="og:title" content="tarker服务搭建">
-<meta property="og:url" content="https://justsolitude.com/2018/10/09/traker服务搭建/index.html">
+<meta property="og:title" content="muduo源码学习笔记(3)">
+<meta property="og:url" content="https://justsolitude.com/2018/10/25/muduo源码学习笔记-4/index.html">
 <meta property="og:site_name" content="Solitude">
-<meta property="og:description" content="tarker服务有那些组成​    一般来说，搭建一个tarker服务器，只需要一个BitTorrent Tracker就可以了，但是如果想用web浏览器发布BT种子，就需要做一个Web页面，让用户可以从这个页面下载种子，然后用BT客户端可以下载文件。  搭建过程(ubtuntu篇)​    以下所有命令都必须拥有root权限或者sudo ​    1.安装bittorrent     1$　a">
+<meta property="og:description" content="无界队列​    什么是无界队列？指的是没有设置固定大小的队列。这些队列可以直接入列，直至溢出。用消费者生产者模型举例，生产者可以向仓库添加数据无须关心仓库是否已空，消费者在判断仓库已空时要等待生产者的生产并通知。 ​    可以看出我们在实现无界队列的时候，需要关注一个事件，就是仓库已空的事件，所以我们需要一个信号量，另外为了保证不产生race condition，我们需要一个全局的锁，在消费者">
 <meta property="og:locale" content="default">
-<meta property="og:updated_time" content="2018-10-09T10:28:03.661Z">
+<meta property="og:updated_time" content="2018-10-25T12:46:45.574Z">
 <meta name="twitter:card" content="summary">
-<meta name="twitter:title" content="tarker服务搭建">
-<meta name="twitter:description" content="tarker服务有那些组成​    一般来说，搭建一个tarker服务器，只需要一个BitTorrent Tracker就可以了，但是如果想用web浏览器发布BT种子，就需要做一个Web页面，让用户可以从这个页面下载种子，然后用BT客户端可以下载文件。  搭建过程(ubtuntu篇)​    以下所有命令都必须拥有root权限或者sudo ​    1.安装bittorrent     1$　a">
+<meta name="twitter:title" content="muduo源码学习笔记(3)">
+<meta name="twitter:description" content="无界队列​    什么是无界队列？指的是没有设置固定大小的队列。这些队列可以直接入列，直至溢出。用消费者生产者模型举例，生产者可以向仓库添加数据无须关心仓库是否已空，消费者在判断仓库已空时要等待生产者的生产并通知。 ​    可以看出我们在实现无界队列的时候，需要关注一个事件，就是仓库已空的事件，所以我们需要一个信号量，另外为了保证不产生race condition，我们需要一个全局的锁，在消费者">
   
     <link rel="alternative" href="/atom.xml" title="Solitude" type="application/atom+xml">
   
@@ -143,97 +143,41 @@
             <canvas data-colors="#eaeaea" data-sectionHeight="100" data-contentId="js-content" id="myCanvas1" class="anm-canvas"></canvas>
           </div>
           <div id="js-content" class="content-ll">
-            <article id="post-traker服务搭建" class="article article-type-post " itemscope itemprop="blogPost">
+            <article id="post-muduo源码学习笔记-4" class="article article-type-post " itemscope itemprop="blogPost">
   <div class="article-inner">
     
       <header class="article-header">
         
   
     <h1 class="article-title" itemprop="name">
-      tarker服务搭建
+      muduo源码学习笔记(3)
     </h1>
   
 
         
-        <a href="/2018/10/09/traker服务搭建/" class="archive-article-date">
-  	<time datetime="2018-10-09T08:40:00.000Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2018-10-09</time>
+        <a href="/2018/10/25/muduo源码学习笔记-4/" class="archive-article-date">
+  	<time datetime="2018-10-25T10:36:00.000Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2018-10-25</time>
 </a>
         
       </header>
     
     <div class="article-entry" itemprop="articleBody">
       
-        <hr>
-<h5 id="tarker服务有那些组成"><a href="#tarker服务有那些组成" class="headerlink" title="tarker服务有那些组成"></a>tarker服务有那些组成</h5><p>​    一般来说，搭建一个tarker服务器，只需要一个BitTorrent Tracker就可以了，但是如果想用web浏览器发布BT种子，就需要做一个Web页面，让用户可以从这个页面下载种子，然后用BT客户端可以下载文件。 </p>
-<h5 id="搭建过程-ubtuntu篇"><a href="#搭建过程-ubtuntu篇" class="headerlink" title="搭建过程(ubtuntu篇)"></a>搭建过程(ubtuntu篇)</h5><p>​    以下所有命令都必须拥有root权限或者sudo</p>
-<p>​    1.安装bittorrent    </p>
-<figure class="highlight powershell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">$　apt-get install bittorrent</span><br></pre></td></tr></table></figure>
-<p>​    ２.安装Apache</p>
-<figure class="highlight powershell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">$　apt-get install apache2</span><br></pre></td></tr></table></figure>
-<p>​    3.配置apache服务器</p>
-<figure class="highlight powershell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">$　cd /etc/apache2/mods-available </span><br><span class="line">$　vim mime.conf</span><br></pre></td></tr></table></figure>
-<p>​    将这一段追加到合适的位置</p>
-<figure class="highlight powershell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">AddType application/x-bittorrent .torrent</span><br></pre></td></tr></table></figure>
-<p>​    注意中间有空格</p>
-<p>​    4.在Web主目录下建立bt用文件夹</p>
-<figure class="highlight powershell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">$　mkdir /var/www/html/bt/</span><br></pre></td></tr></table></figure>
-<p>​    5.上传共享文件到bt用文件夹 </p>
-<figure class="highlight powershell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">	$　tree bt</span><br><span class="line">bt/</span><br><span class="line">└── miniftp</span><br><span class="line">    └── miniftpd.avi</span><br></pre></td></tr></table></figure>
-<p>​    6.制作种子文件</p>
-<figure class="highlight powershell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">$ ls</span><br><span class="line">miniftp</span><br><span class="line">$　btmakemetafile miniftp http://<span class="number">127.0</span>.<span class="number">0.1</span>:<span class="number">6969</span>/announce </span><br><span class="line">$ ls</span><br><span class="line">miniftp  miniftp.torrent</span><br></pre></td></tr></table></figure>
-<p>​    7.开启Traker服务</p>
-<figure class="highlight powershell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">$ bttrack --port <span class="number">6969</span> --dfile /tmp/dfile &gt;/tmp/bt.log &amp;</span><br></pre></td></tr></table></figure>
-<p>​    8.服务器做种 </p>
-<figure class="highlight powershell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">$ btlaunchmany ./ &gt; /dev/null &amp;</span><br></pre></td></tr></table></figure>
-<p>​    9.开启Apache</p>
-<figure class="highlight powershell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">$ service apacha2 start</span><br></pre></td></tr></table></figure>
-<p>​    10.查看种子信息</p>
-<p>​    web浏览器访问127.0.0.1:6969就可以看到种子信息</p>
-<blockquote>
-<h3 id="BitTorrent-download-info"><a href="#BitTorrent-download-info" class="headerlink" title="BitTorrent download info"></a>BitTorrent download info</h3><ul>
-<li><strong>tracker version:</strong> 3.4.2</li>
-<li><strong>server time:</strong> 2018-10-09 08:55 UTC</li>
-</ul>
-<table>
-<thead>
-<tr>
-<th>info hash</th>
-<th>complete</th>
-<th>downloading</th>
-<th>downloaded</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><code>2b1f84af0821c2240fe2de6cc76081836905684d</code></td>
-<td><code>1</code></td>
-<td><code>0</code></td>
-<td><code>0</code></td>
-</tr>
-<tr>
-<td>0 files</td>
-<td>1/1</td>
-<td>0/0</td>
-<td>0/0</td>
-</tr>
-</tbody>
-</table>
-<ul>
-<li><em>info hash:</em> SHA1 hash of the “info” section of the metainfo (*.torrent)</li>
-<li><em>complete:</em> number of connected clients with the complete file (total: unique IPs/total connections)</li>
-<li><em>downloading:</em> number of connected clients still downloading (total: unique IPs/total connections)</li>
-<li><em>downloaded:</em> reported complete downloads (total: current/all)</li>
-<li><em>transferred:</em> torrent size * total downloaded (does not include partial transfers)</li>
-</ul>
-</blockquote>
-<h5 id="搭建过程-centos篇"><a href="#搭建过程-centos篇" class="headerlink" title="搭建过程(centos篇)"></a>搭建过程(centos篇)</h5><p>　    1.安装BitTorrent</p>
-<p>​    你可以到 <a href="http://bitconjurer.org/BitTorrent/download.html" target="_blank" rel="noopener">http://bitconjurer.org/BitTorrent/download.html</a> 去下载最新的*nux下用的tar 或zip 包，然后进行安装，不过4.0版本以上发生了变化，推荐3.4.２版本</p>
-<p>​    2.制作发布文件</p>
-<figure class="highlight powershell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">$ ./btmakemetafile.py /文件地址 http://IP:<span class="number">6969</span>/announce</span><br></pre></td></tr></table></figure>
-<p>​    ３.启动trakert服务</p>
-<figure class="highlight powershell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">$ ./bttrack.py --port <span class="number">6969</span> --dfile dstate &gt;&gt;/var/log/bttrack.log</span><br></pre></td></tr></table></figure>
-<p>​    ４.生成种子文件</p>
-<figure class="highlight powershell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">$ ./btdownloadheadless.py --max_allow_in <span class="number">20</span> --max_upload_rate <span class="number">500</span> --minport <span class="number">6888</span> --maxport <span class="number">6888</span> /种子地址--saveas /文件地址</span><br></pre></td></tr></table></figure>
+        <h5 id="无界队列"><a href="#无界队列" class="headerlink" title="无界队列"></a>无界队列</h5><p>​    什么是无界队列？指的是没有设置固定大小的队列。这些队列可以直接入列，直至溢出。用消费者生产者模型举例，生产者可以向仓库添加数据无须关心仓库是否已空，消费者在判断仓库已空时要等待生产者的生产并通知。</p>
+<p>​    可以看出我们在实现无界队列的时候，需要关注一个事件，就是仓库已空的事件，所以我们需要一个信号量，另外为了保证不产生race condition，我们需要一个全局的锁，在消费者判断仓库是否为空取得产品的时候加以保护。</p>
+<a id="more"></a>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">template</span>&lt;<span class="keyword">typename</span> T&gt;</span><br><span class="line">   <span class="class"><span class="keyword">class</span> <span class="title">BlockingQueue</span> :</span> boost::noncopyable</span><br><span class="line">    &#123;</span><br><span class="line">    <span class="keyword">public</span>:</span><br><span class="line">        BlockingQueue():mutex_, notEmpty_(mutex_), queue_()</span><br><span class="line">        &#123;&#125;</span><br><span class="line"></span><br><span class="line">        <span class="function"><span class="keyword">void</span> <span class="title">put</span><span class="params">(<span class="keyword">const</span> T&amp; x)</span>    <span class="comment">// 生产T， 生产者</span></span></span><br><span class="line"><span class="function">        </span>&#123;</span><br><span class="line">            <span class="function">MutexLockGuard <span class="title">lock</span><span class="params">(mutex_)</span></span>;</span><br><span class="line">            queue_.push_back(x);</span><br><span class="line">            notEmpty_.notify();          <span class="comment">//唤醒正在等待的消费者</span></span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line"><span class="meta">#<span class="meta-keyword">ifdef</span> __GXX_EXPERIMENTAL_CXX0X__</span></span><br><span class="line">        <span class="function"><span class="keyword">void</span> <span class="title">put</span><span class="params">(T&amp;&amp; x)</span></span></span><br><span class="line"><span class="function">        </span>&#123;</span><br><span class="line">            <span class="function">MutexLockGuard <span class="title">lock</span><span class="params">(mutex_)</span></span>;</span><br><span class="line">            queue_.push_back(<span class="built_in">std</span>::move(x));<span class="comment">// c++11 move</span></span><br><span class="line">            notEmpty_.notify();</span><br><span class="line">        &#125;</span><br><span class="line"><span class="meta">#<span class="meta-keyword">endif</span></span></span><br><span class="line">        <span class="function">T <span class="title">take</span><span class="params">()</span>           <span class="comment">//获取T, 消费者</span></span></span><br><span class="line"><span class="function">        </span>&#123;</span><br><span class="line">            <span class="function">MutexLockGuard <span class="title">lock</span><span class="params">(mutex_)</span></span>;</span><br><span class="line">            <span class="keyword">while</span>(queue_.empty())</span><br><span class="line">            &#123;</span><br><span class="line">                notEmpty_.wait();</span><br><span class="line">            &#125;</span><br><span class="line">            assert(!queue_.empty());</span><br><span class="line"><span class="meta">#<span class="meta-keyword">ifdef</span> __GXX_EXPERIMENTAL_CXX0X__             <span class="comment">// 相比拷贝构造，转化成右值移动更节省空间</span></span></span><br><span class="line">            T front(std::move(queue_.front()));</span><br><span class="line"><span class="meta">#<span class="meta-keyword">else</span></span></span><br><span class="line">            T fornt(queue_.front());</span><br><span class="line"><span class="meta">#<span class="meta-keyword">endif</span></span></span><br><span class="line">            queue_.pop_front();</span><br><span class="line">            <span class="keyword">return</span> front;</span><br><span class="line">        &#125;</span><br><span class="line">    <span class="keyword">private</span>:</span><br><span class="line">        <span class="keyword">mutable</span> MutexLock   mutex_;     </span><br><span class="line">        Condition           notEmpty_;</span><br><span class="line">        <span class="built_in">std</span>::<span class="built_in">deque</span>&lt;T&gt;       queue_;</span><br><span class="line">    &#125;;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>​    在这里我们可以实现一个简单的测试程序，对刚才的代码进行测试，基本思想就是有一个生产者线程不断生产数据并打印，有多个消费者线程不断消费数据并打印。</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">void</span> <span class="title">Produce</span><span class="params">(<span class="built_in">shared_ptr</span>&lt;BlockingQueue&lt;<span class="keyword">int</span>&gt;&gt; <span class="built_in">queue</span>)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    <span class="keyword">while</span> (<span class="number">1</span>)</span><br><span class="line">    &#123;</span><br><span class="line">        <span class="keyword">int</span> product = rand() % <span class="number">1000</span>+ <span class="number">1</span>;</span><br><span class="line">        LOG_INFO &lt;&lt; <span class="string">"Produce: "</span> &lt;&lt; product ;</span><br><span class="line">        <span class="built_in">queue</span>-&gt;put(product);</span><br><span class="line">        sleep(<span class="number">1</span>);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">void</span> <span class="title">Consome</span><span class="params">(<span class="built_in">shared_ptr</span>&lt;BlockingQueue&lt;<span class="keyword">int</span>&gt;&gt; <span class="built_in">queue</span>)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    <span class="keyword">while</span>(<span class="number">1</span>)</span><br><span class="line">    &#123;</span><br><span class="line">        <span class="keyword">int</span> product = <span class="built_in">queue</span>-&gt;take();</span><br><span class="line">        LOG_INFO &lt;&lt;<span class="string">"id : "</span> &lt;&lt;CurrentThread::tid();</span><br><span class="line">        LOG_INFO&lt;&lt; <span class="string">"Consome : "</span> &lt;&lt; product;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">main</span><span class="params">()</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    <span class="built_in">shared_ptr</span>&lt;BlockingQueue&lt;<span class="keyword">int</span>&gt;&gt; blockingqueue(<span class="keyword">new</span> BlockingQueue&lt;<span class="keyword">int</span>&gt;);</span><br><span class="line">    Thread t1(bind(Produce, blockingqueue));</span><br><span class="line">    Thread t2(bind(Consome, blockingqueue));</span><br><span class="line">    Thread t3(bind(Consome, blockingqueue));</span><br><span class="line">    t1.start();</span><br><span class="line">    t2.start();</span><br><span class="line">    t3.start();</span><br><span class="line">    t1.join();</span><br><span class="line">    t2.join();</span><br><span class="line">    t3.join();</span><br><span class="line">    <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h5 id="有界队列"><a href="#有界队列" class="headerlink" title="有界队列"></a>有界队列</h5><p>​    与无界队列不同，有界队列的队列是有边界的，即此时有四个状态：非空、已空、非满、已满。</p>
+<p>​    对于生产者而言，需要关注两个事件，已满和非满。当生产者生产时，会先判断仓库是否已满，如果是则等待仓库非满的信号;否则则向仓库添加货物，之后通知消费者仓库非空。</p>
+<p>​    对于消费者而言，需要关注两个事件，非空和已空。当消费者取货物时会先判断仓库是否为空，如果是则等待仓库非空信号;否则取走货物，通知生产者仓库非满。</p>
+<pre><code>这个时候我们就需要两个信号量，一个是非空，一个是非满，来实现有界队列。
+</code></pre><figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">template</span> &lt;<span class="keyword">typename</span> T&gt;</span><br><span class="line"> <span class="class"><span class="keyword">class</span> <span class="title">BoundedBlockingQueue</span> :</span> boost::noncopyable</span><br><span class="line"> &#123;</span><br><span class="line"> <span class="keyword">public</span>:</span><br><span class="line">     explicit BoundedBlockingQueue(int maxSize):</span><br><span class="line">             mutex_(),notEmpty_(mutex_),notFull_(mutex_),queue_(maxSize)</span><br><span class="line">     &#123;&#125;</span><br><span class="line"></span><br><span class="line">     <span class="function"><span class="keyword">void</span> <span class="title">put</span><span class="params">(<span class="keyword">const</span> T&amp; x)</span></span></span><br><span class="line"><span class="function">     </span>&#123;</span><br><span class="line">         <span class="function">MutexLockGuard  <span class="title">lock</span><span class="params">(mutex_)</span></span>;</span><br><span class="line">         <span class="keyword">while</span> (queue_.full())　<span class="comment">//仓库已满</span></span><br><span class="line">         &#123;</span><br><span class="line">             notFull_.wait();　　<span class="comment">//等待未满信号</span></span><br><span class="line">         &#125;</span><br><span class="line">         assert(!queue_.full());</span><br><span class="line">         queue_.push_back(x);</span><br><span class="line">         notEmpty_.notify();</span><br><span class="line">     &#125;</span><br><span class="line"></span><br><span class="line">     <span class="function">T <span class="title">take</span><span class="params">()</span></span></span><br><span class="line"><span class="function">     </span>&#123;</span><br><span class="line">         <span class="function">MutexLockGuard <span class="title">lock</span><span class="params">(mutex_)</span></span>;</span><br><span class="line">         <span class="keyword">while</span> (queue_.empty())　<span class="comment">//仓库已空</span></span><br><span class="line">         &#123;</span><br><span class="line">             notEmpty_.wait();　<span class="comment">//等待生产者向仓库添加货物</span></span><br><span class="line">         &#125;</span><br><span class="line">         assert(!queue_.empty());</span><br><span class="line">         T front(queue_.front());</span><br><span class="line">         queue_.pop_front();</span><br><span class="line">         notFull_.notify();</span><br><span class="line">         <span class="keyword">return</span> front;</span><br><span class="line">     &#125;</span><br><span class="line"></span><br><span class="line">     <span class="function"><span class="keyword">bool</span> <span class="title">empty</span><span class="params">()</span> <span class="keyword">const</span></span></span><br><span class="line"><span class="function">     </span>&#123;</span><br><span class="line">         <span class="function">MutexLockGuard <span class="title">lock</span><span class="params">(mutex_)</span></span>;</span><br><span class="line">         <span class="keyword">return</span> queue_.empty();</span><br><span class="line">     &#125;</span><br><span class="line"></span><br><span class="line">     <span class="function"><span class="keyword">bool</span> <span class="title">full</span><span class="params">()</span> <span class="keyword">const</span></span></span><br><span class="line"><span class="function">     </span>&#123;</span><br><span class="line">         <span class="function">MutexLockGuard <span class="title">lock</span><span class="params">(mutex_)</span></span>;</span><br><span class="line">         <span class="keyword">return</span> queue_.full();</span><br><span class="line">     &#125;</span><br><span class="line"></span><br><span class="line">     <span class="keyword">size_t</span> size() <span class="keyword">const</span></span><br><span class="line">     &#123;</span><br><span class="line">         <span class="function">MutexLockGuard <span class="title">lock</span><span class="params">(mutex_)</span></span>;</span><br><span class="line">         <span class="keyword">return</span> queue_.size();</span><br><span class="line">     &#125;</span><br><span class="line"></span><br><span class="line">     <span class="keyword">size_t</span> capacity() <span class="keyword">const</span></span><br><span class="line">     &#123;</span><br><span class="line">         <span class="function">MutexLockGuard <span class="title">lock</span><span class="params">(mutex_)</span></span>;</span><br><span class="line">         <span class="keyword">return</span> queue_.capacity();</span><br><span class="line">     &#125;</span><br><span class="line"> <span class="keyword">private</span>:</span><br><span class="line">     <span class="keyword">mutable</span> MutexLock           mutex_;</span><br><span class="line">     Condition                   notEmpty_;     <span class="comment">//非空信号量</span></span><br><span class="line">     Condition                   notFull_;	　　<span class="comment">//非满信号量</span></span><br><span class="line">     boost::circular_buffer&lt;T&gt;   queue_;</span><br><span class="line"> &#125;;</span><br></pre></td></tr></table></figure>
+<p>　　　注意在实现有界队列的时候，我们使用的是circular_buffer，不是deque，circular_buffer的特点是可以实现固定大小的队列，它的大小不会随着capacity的动态增长，当容量满了以后，插入一个元素时，还会在容器的开头或者结尾处删掉一个元素，至于是头部还是尾部取决已加入的位置。</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br></pre></td><td class="code"><pre><span class="line">boost::circular_buffer&lt;<span class="keyword">int</span>&gt; cb(<span class="number">3</span>);</span><br><span class="line"> cb.push_back(<span class="number">1</span>);</span><br><span class="line"> cb.push_back(<span class="number">2</span>);</span><br><span class="line"> cb.push_back(<span class="number">3</span>);</span><br><span class="line"> <span class="keyword">for</span> (<span class="keyword">int</span> i = <span class="number">0</span>; i &lt; cb.size(); ++i)</span><br><span class="line"> &#123;</span><br><span class="line">     <span class="built_in">std</span>::<span class="built_in">cout</span> &lt;&lt; cb[i] &lt;&lt; <span class="string">" "</span>;</span><br><span class="line"> &#125;</span><br><span class="line"></span><br><span class="line"> <span class="built_in">std</span>::<span class="built_in">cout</span> &lt;&lt; <span class="built_in">std</span>::<span class="built_in">endl</span>;  <span class="comment">//1 2 3</span></span><br><span class="line"> <span class="comment">//此时容量已满，下面新的push_back操作将在头部删除一个元素</span></span><br><span class="line"> cb.push_back(<span class="number">4</span>);</span><br><span class="line"> <span class="keyword">for</span> (<span class="keyword">int</span> i = <span class="number">0</span>; i &lt; cb.size(); ++i)</span><br><span class="line"> &#123; </span><br><span class="line">     <span class="built_in">std</span>::<span class="built_in">cout</span> &lt;&lt; cb[i] &lt;&lt; <span class="string">" "</span>; </span><br><span class="line"> &#125;</span><br><span class="line"> <span class="built_in">std</span>::<span class="built_in">cout</span> &lt;&lt; <span class="built_in">std</span>::<span class="built_in">endl</span>;     <span class="comment">//2 3 4 </span></span><br><span class="line"> <span class="comment">//下面的push_front操作将在尾部删除一个元素</span></span><br><span class="line"> cb.push_front(<span class="number">5</span>);</span><br><span class="line"> <span class="keyword">for</span> (<span class="keyword">int</span> i = <span class="number">0</span>; i &lt; cb.size(); ++i)</span><br><span class="line"> &#123;</span><br><span class="line">     <span class="built_in">std</span>::<span class="built_in">cout</span> &lt;&lt; cb[i] &lt;&lt; <span class="string">" "</span>;</span><br><span class="line"> &#125;</span><br><span class="line"> <span class="built_in">std</span>::<span class="built_in">cout</span> &lt;&lt; <span class="built_in">std</span>::<span class="built_in">endl</span>;  <span class="comment">//5 2 3</span></span><br></pre></td></tr></table></figure>
+<p>​    要测试这段代码，我们需要模拟出四个状态，这个并不困难，我们只需要将让生产者和消费者随机睡眠一定范围的时间在规定一个不太大的边界即可。</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br></pre></td><td class="code"><pre><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">void</span> <span class="title">Produce</span><span class="params">(<span class="built_in">shared_ptr</span>&lt;BoundedBlockingQueue&lt;<span class="keyword">int</span>&gt; &gt; <span class="built_in">queue</span>)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    <span class="keyword">while</span>(<span class="literal">true</span>)</span><br><span class="line">    &#123;</span><br><span class="line">        <span class="keyword">int</span> product=rand()%<span class="number">1000</span>+<span class="number">1</span>;</span><br><span class="line">        <span class="built_in">std</span>::<span class="built_in">cout</span>&lt;&lt;<span class="string">"Produce: "</span>&lt;&lt;product&lt;&lt;<span class="built_in">std</span>::<span class="built_in">endl</span>;</span><br><span class="line">        <span class="built_in">queue</span>-&gt;put(product);</span><br><span class="line">        sleep(rand()%<span class="number">5</span>);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"><span class="function"><span class="keyword">void</span> <span class="title">Consome</span><span class="params">(<span class="built_in">shared_ptr</span>&lt;BoundedBlockingQueue&lt;<span class="keyword">int</span>&gt; &gt; <span class="built_in">queue</span>)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    <span class="keyword">while</span>(<span class="literal">true</span>)</span><br><span class="line">    &#123;</span><br><span class="line">        <span class="keyword">int</span> product=<span class="built_in">queue</span>-&gt;take();</span><br><span class="line">        <span class="built_in">std</span>::<span class="built_in">cout</span>&lt;&lt;<span class="string">"Consome: "</span>&lt;&lt;product&lt;&lt;<span class="built_in">std</span>::<span class="built_in">endl</span>;</span><br><span class="line">        sleep(rand()%<span class="number">5</span>);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">main</span><span class="params">()</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    <span class="built_in">shared_ptr</span>&lt;BoundedBlockingQueue&lt;<span class="keyword">int</span>&gt; &gt; boundedBlockingQueue(<span class="keyword">new</span> BoundedBlockingQueue&lt;<span class="keyword">int</span>&gt;(<span class="number">2</span>));</span><br><span class="line">    Thread t1(boost::bind(Produce, boundedBlockingQueue));</span><br><span class="line">    Thread t2(boost::bind(Consome, boundedBlockingQueue));</span><br><span class="line"></span><br><span class="line">    t1.start();</span><br><span class="line">    t2.start();</span><br><span class="line"></span><br><span class="line">    t1.join();</span><br><span class="line">    t2.join();</span><br><span class="line">    <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 
       
 
@@ -268,11 +212,11 @@
 		<ul class="article-tag-list">
 			 
         		<li class="article-tag-list-item">
-        			<a href="javascript:void(0)" class="js-tag article-tag-list-link color3">BT</a>
+        			<a href="javascript:void(0)" class="js-tag article-tag-list-link color4">多线程</a>
         		</li>
       		 
         		<li class="article-tag-list-item">
-        			<a href="javascript:void(0)" class="js-tag article-tag-list-link color5">运维相关</a>
+        			<a href="javascript:void(0)" class="js-tag article-tag-list-link color1">muduo</a>
         		</li>
       		
 		</ul>
@@ -328,7 +272,7 @@
     <a class="close js-modal-close" href="javascript:;"><i class="icon icon-close"></i></a>
     <p>扫一扫，分享到微信</p>
     <div class="wx-qrcode">
-      <img src="//pan.baidu.com/share/qrcode?url=https://justsolitude.com/2018/10/09/traker服务搭建/" alt="微信分享二维码">
+      <img src="//pan.baidu.com/share/qrcode?url=https://justsolitude.com/2018/10/25/muduo源码学习笔记-4/" alt="微信分享二维码">
     </div>
 </div>
 
@@ -342,18 +286,9 @@
   
 <nav id="article-nav">
   
-    <a href="/2018/10/25/muduo源码学习笔记-4/" id="article-nav-newer" class="article-nav-link-wrap">
-      <i class="icon-circle-left"></i>
-      <div class="article-nav-title">
-        
-          muduo源码学习笔记(3)
-        
-      </div>
-    </a>
   
-  
-    <a href="/2018/09/14/libevent源码分析3/" id="article-nav-older" class="article-nav-link-wrap">
-      <div class="article-nav-title">libevent源码分析(3)</div>
+    <a href="/2018/10/09/traker服务搭建/" id="article-nav-older" class="article-nav-link-wrap">
+      <div class="article-nav-title">tarker服务搭建</div>
       <i class="icon-circle-right"></i>
     </a>
   
@@ -380,7 +315,7 @@
                 </span>
                 <span class="tooltip-content">
                     <div class="toc-article">
-                    <ol class="toc"><li class="toc-item toc-level-5"><a class="toc-link" href="#tarker服务有那些组成"><span class="toc-number">1.</span> <span class="toc-text">tarker服务有那些组成</span></a></li><li class="toc-item toc-level-5"><a class="toc-link" href="#搭建过程-ubtuntu篇"><span class="toc-number">2.</span> <span class="toc-text">搭建过程(ubtuntu篇)</span></a></li></ol></li></ol></li><li class="toc-item toc-level-3"><a class="toc-link" href="#BitTorrent-download-info"><span class="toc-number"></span> <span class="toc-text">BitTorrent download info</span></a><ol class="toc-child"><li class="toc-item toc-level-5"><a class="toc-link" href="#搭建过程-centos篇"><span class="toc-number">1.</span> <span class="toc-text">搭建过程(centos篇)</span></a></li></ol>
+                    <ol class="toc"><li class="toc-item toc-level-5"><a class="toc-link" href="#无界队列"><span class="toc-number">1.</span> <span class="toc-text">无界队列</span></a></li><li class="toc-item toc-level-5"><a class="toc-link" href="#有界队列"><span class="toc-number">2.</span> <span class="toc-text">有界队列</span></a></li></ol>
                     </div>
                 </span>
             </div>
@@ -396,7 +331,7 @@
   
 
   
-  <div id="SOHUCS" sid="traker服务搭建" ></div> 
+  <div id="SOHUCS" sid="muduo源码学习笔记-4" ></div> 
 <script charset="utf-8" type="text/javascript" src="//changyan.sohu.com/upload/changyan.js" ></script>
 <script type="text/javascript">
     window.changyan.api.config({
