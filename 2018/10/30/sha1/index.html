@@ -16,7 +16,7 @@
 <meta property="og:site_name" content="Solitude">
 <meta property="og:description" content="算法简介​    SHA安全散列算法SHA （Secure Hash Algorithm，SHA)是美国国家标准技术研究所发布的国家标准FIPS PUB 180，最新的标准已经于2008年更新到FIPS PUB 180-3。其中规定了SHA-1，SHA-224，SHA-256，SHA-384，和SHA-512这几种单向散列算法。SHA-1，SHA-224和SHA-256适用于长度不超过2^64二进">
 <meta property="og:locale" content="default">
-<meta property="og:updated_time" content="2018-10-30T03:45:00.088Z">
+<meta property="og:updated_time" content="2018-10-30T08:43:51.644Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="Sha加密算法和实现">
 <meta name="twitter:description" content="算法简介​    SHA安全散列算法SHA （Secure Hash Algorithm，SHA)是美国国家标准技术研究所发布的国家标准FIPS PUB 180，最新的标准已经于2008年更新到FIPS PUB 180-3。其中规定了SHA-1，SHA-224，SHA-256，SHA-384，和SHA-512这几种单向散列算法。SHA-1，SHA-224和SHA-256适用于长度不超过2^64二进">
@@ -192,6 +192,7 @@
 <p>​    00000000 00000000 00000000 00000000</p>
 <p>​    00000000 00000000 00000000 00000018</p>
 <p>​    如果原始的消息长度超过了512，我们需要将它补成512的倍数。然后我们把整个消息分成一个一个512位的数据块，分别处理每一个数据块，从而得到消息摘要。</p>
+<a id="more"></a>
 <p>4.计算消息摘要</p>
 <p>​    必须使用进行了补位和补长度后的消息来计算消息摘要。计算需要两个缓冲区，每个都由5个32位的字组成，还需要一个80个32位字的缓冲区。第一个5个字的缓冲区被标识为A，B，C，D，E。第一个5个字的缓冲区被标识为H0,H1, H2, H3, H4。80个字的缓冲区被标识为W0, W1,…, W79     </p>
 <p>​    另外还需要一个一个字的TEMP缓冲区。</p>
@@ -499,15 +500,15 @@ return o(i(t),arguments.length<2?void 0:u(arguments[1]))}})},function(t,n,r){var
               </li>
              
               <li class="article-tag-list-item">
-                <a href="javascript:void(0)" class="js-tag color1">服务端编程</a>
-              </li>
-             
-              <li class="article-tag-list-item">
                 <a href="javascript:void(0)" class="js-tag color3">BT</a>
               </li>
              
               <li class="article-tag-list-item">
                 <a href="javascript:void(0)" class="js-tag color5">运维相关</a>
+              </li>
+             
+              <li class="article-tag-list-item">
+                <a href="javascript:void(0)" class="js-tag color1">服务端编程</a>
               </li>
             
             <div class="clearfix"></div>
