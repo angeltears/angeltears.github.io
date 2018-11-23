@@ -6,19 +6,19 @@
   <meta name="renderer" content="webkit">
   <meta http-equiv="X-UA-Compatible" content="IE=edge" >
   <link rel="dns-prefetch" href="https://justsolitude.com">
-  <title>muduo源码学习笔记(3) | Solitude</title>
+  <title>muduo源码学习笔记(4) | Solitude</title>
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
   <meta name="description" content="无界队列​    什么是无界队列？指的是没有设置固定大小的队列。这些队列可以直接入列，直至溢出。用消费者生产者模型举例，生产者可以向仓库添加数据无须关心仓库是否已空，消费者在判断仓库已空时要等待生产者的生产并通知。 ​    可以看出我们在实现无界队列的时候，需要关注一个事件，就是仓库已空的事件，所以我们需要一个信号量，另外为了保证不产生race condition，我们需要一个全局的锁，在消费者">
 <meta name="keywords" content="多线程,muduo">
 <meta property="og:type" content="article">
-<meta property="og:title" content="muduo源码学习笔记(3)">
+<meta property="og:title" content="muduo源码学习笔记(4)">
 <meta property="og:url" content="https://justsolitude.com/2018/10/25/muduo源码学习笔记-4/index.html">
 <meta property="og:site_name" content="Solitude">
 <meta property="og:description" content="无界队列​    什么是无界队列？指的是没有设置固定大小的队列。这些队列可以直接入列，直至溢出。用消费者生产者模型举例，生产者可以向仓库添加数据无须关心仓库是否已空，消费者在判断仓库已空时要等待生产者的生产并通知。 ​    可以看出我们在实现无界队列的时候，需要关注一个事件，就是仓库已空的事件，所以我们需要一个信号量，另外为了保证不产生race condition，我们需要一个全局的锁，在消费者">
 <meta property="og:locale" content="default">
-<meta property="og:updated_time" content="2018-10-25T12:46:45.574Z">
+<meta property="og:updated_time" content="2018-11-23T09:40:47.414Z">
 <meta name="twitter:card" content="summary">
-<meta name="twitter:title" content="muduo源码学习笔记(3)">
+<meta name="twitter:title" content="muduo源码学习笔记(4)">
 <meta name="twitter:description" content="无界队列​    什么是无界队列？指的是没有设置固定大小的队列。这些队列可以直接入列，直至溢出。用消费者生产者模型举例，生产者可以向仓库添加数据无须关心仓库是否已空，消费者在判断仓库已空时要等待生产者的生产并通知。 ​    可以看出我们在实现无界队列的时候，需要关注一个事件，就是仓库已空的事件，所以我们需要一个信号量，另外为了保证不产生race condition，我们需要一个全局的锁，在消费者">
   
     <link rel="alternative" href="/atom.xml" title="Solitude" type="application/atom+xml">
@@ -150,7 +150,7 @@
         
   
     <h1 class="article-title" itemprop="name">
-      muduo源码学习笔记(3)
+      muduo源码学习笔记(4)
     </h1>
   
 
@@ -438,6 +438,10 @@ return o(i(t),arguments.length<2?void 0:u(arguments[1]))}})},function(t,n,r){var
           <ul class="article-tag-list" q-show="showTags">
              
               <li class="article-tag-list-item">
+                <a href="javascript:void(0)" class="js-tag color4">compress</a>
+              </li>
+             
+              <li class="article-tag-list-item">
                 <a href="javascript:void(0)" class="js-tag color4">FTP</a>
               </li>
              
@@ -467,10 +471,6 @@ return o(i(t),arguments.length<2?void 0:u(arguments[1]))}})},function(t,n,r){var
              
               <li class="article-tag-list-item">
                 <a href="javascript:void(0)" class="js-tag color1">服务端编程</a>
-              </li>
-             
-              <li class="article-tag-list-item">
-                <a href="javascript:void(0)" class="js-tag color4">compress</a>
               </li>
             
             <div class="clearfix"></div>
