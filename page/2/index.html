@@ -144,6 +144,92 @@
           <div id="js-content" class="content-ll">
             
   
+    <article id="post-libevnt源码分析1" class="article article-type-post  article-index" itemscope itemprop="blogPost">
+  <div class="article-inner">
+    
+      <header class="article-header">
+        
+  
+    <h1 itemprop="name">
+      <a class="article-title" href="/2018/09/11/libevnt源码分析1/">libevent源码分析(1)</a>
+    </h1>
+  
+
+        
+        <a href="/2018/09/11/libevnt源码分析1/" class="archive-article-date">
+  	<time datetime="2018-09-11T11:00:00.000Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2018-09-11</time>
+</a>
+        
+      </header>
+    
+    <div class="article-entry" itemprop="articleBody">
+      
+        <p>写在前面：</p>
+<p>​    这个源码是分析libevent-2.0.20-stable, 并非最新版本的libevent，作者并没有全看源码，在这里会推荐以下参考的一些网站，也欢迎大家在不足的地方提出来进行讨论。</p>
+<p>​    <a href="https://blog.csdn.net/luotuo44/article/list/3" target="_blank" rel="noopener">libevent源码分析</a></p>
+<p>​    <a href="https://blog.csdn.net/jcjx0315/article/details/79693484" target="_blank" rel="noopener">libevent深度剖析１</a></p>
+<p>​    <a href="https://blog.csdn.net/sparkliang/article/details/4957667" target="_blank" rel="noopener">libevent深度剖析２</a></p>
+<p>在event2/event.h中定义了错误类型和错误的回调函数</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="meta-keyword">define</span> EVENT_LOG_DEBUG 0</span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">define</span> EVENT_LOG_MSG   1</span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">define</span> EVENT_LOG_WARN  2</span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">define</span> EVENT_LOG_ERR   3</span></span><br><span class="line"></span><br><span class="line"><span class="meta">#<span class="meta-keyword">define</span> _EVENT_LOG_DEBUG EVENT_LOG_DEBUG</span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">define</span> _EVENT_LOG_MSG EVENT_LOG_MSG</span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">define</span> _EVENT_LOG_WARN EVENT_LOG_WARN</span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">define</span> _EVENT_LOG_ERR EVENT_LOG_ERR</span></span><br><span class="line"></span><br><span class="line"><span class="comment">// 日志回调函数的格式和日志定制函数</span></span><br><span class="line"><span class="function"><span class="keyword">typedef</span> <span class="title">void</span> <span class="params">(*event_log_cb)</span><span class="params">(<span class="keyword">int</span> severity, <span class="keyword">const</span> <span class="keyword">char</span> *msg)</span></span>;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">void</span> <span class="title">event_set_log_callback</span><span class="params">(event_log_cb cb)</span></span>;　</span><br><span class="line"></span><br><span class="line"><span class="comment">// 出错回调函数的格式和错误定制函数</span></span><br><span class="line"><span class="function"><span class="keyword">typedef</span> <span class="title">void</span> <span class="params">(*event_fatal_cb)</span><span class="params">(<span class="keyword">int</span> err)</span></span>;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">void</span> <span class="title">event_set_fatal_callback</span><span class="params">(event_fatal_cb cb)</span></span>;</span><br></pre></td></tr></table></figure>
+<p>在实现上，在log.c中，定义了两个全局的静态变量和设置两个静态变量的回调函数</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">static</span> event_fatal_cb fatal_fn = <span class="literal">NULL</span>;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">void</span>　<span class="title">event_set_fatal_callback</span><span class="params">(event_fatal_cb cb)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">	fatal_fn = cb;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">static</span> event_log_cb log_fn = <span class="literal">NULL</span>;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">void</span>　<span class="title">event_set_log_callback</span><span class="params">(event_log_cb cb)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">	log_fn = cb;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<pre><code>从event_set_log_callback的实现代码可以看到，并没有对这个参数cb做任何检查。
+</code></pre>
+        
+          <a class="article-more-a" href="/2018/09/11/libevnt源码分析1/#more">more >></a>
+        
+      
+
+      
+    </div>
+    <div class="article-info article-info-index">
+      
+      
+	<div class="article-tag tagcloud">
+		<i class="icon-price-tags icon"></i>
+		<ul class="article-tag-list">
+			 
+        		<li class="article-tag-list-item">
+        			<a href="javascript:void(0)" class="js-tag article-tag-list-link color4">libevent</a>
+        		</li>
+      		
+		</ul>
+	</div>
+
+      
+
+      
+        <p class="article-more-link">
+          <a class="article-more-a" href="/2018/09/11/libevnt源码分析1/">展开全文 >></a>
+        </p>
+      
+
+      
+      <div class="clearfix"></div>
+    </div>
+  </div>
+</article>
+
+<aside class="wrap-side-operation">
+    <div class="mod-side-operation">
+        
+        <div class="jump-container" id="js-jump-container" style="display:none;">
+            <a href="javascript:void(0)" class="mod-side-operation__jump-to-top">
+                <i class="icon-font icon-back"></i>
+            </a>
+            <div id="js-jump-plan-container" class="jump-plan-container" style="top: -11px;">
+                <i class="icon-font icon-plane jump-plane"></i>
+            </div>
+        </div>
+        
+        
+    </div>
+</aside>
+
+
+
+
+  
     <article id="post-muduo源码学习笔记-1" class="article article-type-post  article-index" itemscope itemprop="blogPost">
   <div class="article-inner">
     
@@ -744,87 +830,6 @@
 
 
   
-    <article id="post-ftp关键技术二-nobody进程创建和使用（二）" class="article article-type-post  article-index" itemscope itemprop="blogPost">
-  <div class="article-inner">
-    
-      <header class="article-header">
-        
-  
-    <h1 itemprop="name">
-      <a class="article-title" href="/2018/05/24/ftp关键技术二-nobody进程创建和使用（二）/">ftp关键技术二:nobody进程创建和使用（二）</a>
-    </h1>
-  
-
-        
-        <a href="/2018/05/24/ftp关键技术二-nobody进程创建和使用（二）/" class="archive-article-date">
-  	<time datetime="2018-05-24T11:40:00.000Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2018-05-24</time>
-</a>
-        
-      </header>
-    
-    <div class="article-entry" itemprop="articleBody">
-      
-        <hr>
-<p>本文将从以下几个方面具体阐述nobody进程的前世今生 </p>
-<ul>
-<li><strong>如何给予nobody权限</strong></li>
-<li><strong>nobody进程负责的任务以及实现</strong></li>
-</ul>
-        
-          <a class="article-more-a" href="/2018/05/24/ftp关键技术二-nobody进程创建和使用（二）/#more">more >></a>
-        
-      
-
-      
-    </div>
-    <div class="article-info article-info-index">
-      
-      
-	<div class="article-tag tagcloud">
-		<i class="icon-price-tags icon"></i>
-		<ul class="article-tag-list">
-			 
-        		<li class="article-tag-list-item">
-        			<a href="javascript:void(0)" class="js-tag article-tag-list-link color4">FTP</a>
-        		</li>
-      		
-		</ul>
-	</div>
-
-      
-
-      
-        <p class="article-more-link">
-          <a class="article-more-a" href="/2018/05/24/ftp关键技术二-nobody进程创建和使用（二）/">展开全文 >></a>
-        </p>
-      
-
-      
-      <div class="clearfix"></div>
-    </div>
-  </div>
-</article>
-
-<aside class="wrap-side-operation">
-    <div class="mod-side-operation">
-        
-        <div class="jump-container" id="js-jump-container" style="display:none;">
-            <a href="javascript:void(0)" class="mod-side-operation__jump-to-top">
-                <i class="icon-font icon-back"></i>
-            </a>
-            <div id="js-jump-plan-container" class="jump-plan-container" style="top: -11px;">
-                <i class="icon-font icon-plane jump-plane"></i>
-            </div>
-        </div>
-        
-        
-    </div>
-</aside>
-
-
-
-
-  
   
     <nav id="page-nav">
       <a class="extend prev" rel="prev" href="/">&laquo; Prev</a><a class="page-number" href="/">1</a><span class="page-number current">2</span><a class="page-number" href="/page/3/">3</a><a class="extend next" rel="next" href="/page/3/">Next &raquo;</a>
@@ -943,6 +948,10 @@ return o(i(t),arguments.length<2?void 0:u(arguments[1]))}})},function(t,n,r){var
              
               <li class="article-tag-list-item">
                 <a href="javascript:void(0)" class="js-tag color1">服务端编程</a>
+              </li>
+             
+              <li class="article-tag-list-item">
+                <a href="javascript:void(0)" class="js-tag color4">compress</a>
               </li>
             
             <div class="clearfix"></div>

@@ -144,6 +144,107 @@
           <div id="js-content" class="content-ll">
             
   
+    <article id="post-2018-11-23-huffman" class="article article-type-post  article-index" itemscope itemprop="blogPost">
+  <div class="article-inner">
+    
+      <header class="article-header">
+        
+  
+    <h1 itemprop="name">
+      <a class="article-title" href="/2018/11/23/2018-11-23-huffman/">huffman</a>
+    </h1>
+  
+
+        
+        <a href="/2018/11/23/2018-11-23-huffman/" class="archive-article-date">
+  	<time datetime="2018-11-23T11:00:00.000Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2018-11-23</time>
+</a>
+        
+      </header>
+    
+    <div class="article-entry" itemprop="articleBody">
+      
+        <h5 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h5><p>​    哈夫曼编码(Huffman coding)是一种可变长的前缀码。哈夫曼编码使用的算法是David A. Huffman还是在MIT的学生时提出的，并且在1952年发表了名为《A Method for the Construction of Minimum-Redundancy Codes》的文章。编码这种编码的过程叫做哈夫曼编码，它是一种普遍的熵编码技术，包括用于无损数据压缩领域。</p>
+<h5 id="编码过程"><a href="#编码过程" class="headerlink" title="编码过程"></a>编码过程</h5><p>​    夫曼编码使用一种特别的方法为信号源中的每个符号设定二进制码。出现频率更大的符号将获得更短的比特，出现频率更小的符号将被分配更长的比特，以此来提高数据压缩率，提高传输效率。</p>
+<p>​    1.统计</p>
+<p>​    在开始编码时，通常都需要对信号源，也就是本文的一段文字，进行处理，计算出每个符号出现的频率，得到信号源的基本情况。</p>
+<p>​    2.构造优先队列</p>
+<p>　    把得到的符号添加到优先队列中，此优先队列的进出逻辑是频率低的先出，得到包含所有字符的优先队列后，就是处理优先队列中的数据了。</p>
+<p>​    3.构造哈夫曼树</p>
+<p>　　哈夫曼树是带权值得二叉树，我们使用的哈夫曼树的权值自然就是符号的频率了，我们构建哈夫曼树是自底向上的，先构建叶子节点，然后逐步向上，最终完成整颗树。先把队列中的一个符号出列，也就是最小频率的符号，，然后再出列一个符号。这两个符号将作为哈夫曼树的节点，而且这两个节点将作为新节点，也就是它们父节点，的左右孩子节点。新节点的频率，即权值，为孩子节点的和。把这个新节点添加到队列中(队列会重新根据权值排序)。重复上面的步骤，两个符号出列，构造新的父节点，入列……直到队列最后只剩下一个节点，这个节点也就是哈夫曼树的根节点了。</p>
+<p>​    4.创建哈夫曼编码表</p>
+<p>​    通过递归遍历叶子节点，如果是右子树，右移补１，如果是左子树，左移补０，获得每个符号的编码值，并写入表中。</p>
+<p>​    5.写入头部信息</p>
+<p>​    将原始文件的大小和每个符号对应打freqs写入压缩文件中便于解压。</p>
+<p>​    6.通过哈夫曼编码表写入数据</p>
+<p>​    挨个读取原文件中每一个字节，再根据哈夫曼编码表获取压缩的信息，并写入压缩文件中。</p>
+<h5 id="解码过程"><a href="#解码过程" class="headerlink" title="解码过程"></a>解码过程</h5><p>​    １.获取头部信息</p>
+<p>​    读出原始文件的大小并分配对应空间大小，创建并读出符号频率表。</p>
+<p>​    2.构造优先队列</p>
+<p>　    把得到的符号添加到优先队列中，此优先队列的进出逻辑是频率低的先出，得到包含所有字符的优先队列后，就是处理优先队列中的数据了。</p>
+<p>​    3.构造哈夫曼树</p>
+<p>　　哈夫曼树是带权值得二叉树，我们使用的哈夫曼树的权值自然就是符号的频率了，我们构建哈夫曼树是自底向上的，先构建叶子节点，然后逐步向上，最终完成整颗树。先把队列中的一个符号出列，也就是最小频率的符号，，然后再出列一个符号。这两个符号将作为哈夫曼树的节点，而且这两个节点将作为新节点，也就是它们父节点，的左右孩子节点。新节点的频率，即权值，为孩子节点的和。把这个新节点添加到队列中(队列会重新根据权值排序)。重复上面的步骤，两个符号出列，构造新的父节点，入列……直到队列最后只剩下一个节点，这个节点也就是哈夫曼树的根节点了。</p>
+<p>​    4.通过哈夫曼树解压数据</p>
+<p>​    挨个读取压缩信息中的每个字节，按照0和1移动huffman树，移动到叶子节点即视为获取到了一个被压缩的字节，写入到解压文件中。</p>
+<h5 id="特点"><a href="#特点" class="headerlink" title="特点"></a>特点</h5><p>​    1) 编出来的码都是异字头码，保证了码的唯一可译性。 </p>
+<p>　　2) 由于编码长度可变。因此译码时间较长，使得霍夫曼编码的压缩与还原相当费时。</p>
+<p>　　3) 编码长度不统一，硬件实现有难度。 </p>
+<p>​    4) 对不同信号源的编码效率不同，当信号源的符号概率为2的负幂次方时，达到１００％的编码效率;若信号源符号的概率相等，则编码效率最低。</p>
+<p>​    5) 由于”0”与”1”的指定是任意的，故由上述过程编出的最佳码不是唯一的，但其平均码长是一样的，故不影响编码效率与数据压缩性能。</p>
+<h5 id="实现"><a href="#实现" class="headerlink" title="实现"></a>实现</h5><p>​    代码过于昂长，<a href="https://github.com/angeltears/demohub/tree/master/%E6%95%B0%E6%8D%AE%E5%8E%8B%E7%BC%A9" target="_blank" rel="noopener">请移步github</a></p>
+
+      
+
+      
+    </div>
+    <div class="article-info article-info-index">
+      
+      
+	<div class="article-tag tagcloud">
+		<i class="icon-price-tags icon"></i>
+		<ul class="article-tag-list">
+			 
+        		<li class="article-tag-list-item">
+        			<a href="javascript:void(0)" class="js-tag article-tag-list-link color4">compress</a>
+        		</li>
+      		
+		</ul>
+	</div>
+
+      
+
+      
+        <p class="article-more-link">
+          <a class="article-more-a" href="/2018/11/23/2018-11-23-huffman/">展开全文 >></a>
+        </p>
+      
+
+      
+      <div class="clearfix"></div>
+    </div>
+  </div>
+</article>
+
+<aside class="wrap-side-operation">
+    <div class="mod-side-operation">
+        
+        <div class="jump-container" id="js-jump-container" style="display:none;">
+            <a href="javascript:void(0)" class="mod-side-operation__jump-to-top">
+                <i class="icon-font icon-back"></i>
+            </a>
+            <div id="js-jump-plan-container" class="jump-plan-container" style="top: -11px;">
+                <i class="icon-font icon-plane jump-plane"></i>
+            </div>
+        </div>
+        
+        
+    </div>
+</aside>
+
+
+
+
+  
     <article id="post-sha1" class="article article-type-post  article-index" itemscope itemprop="blogPost">
   <div class="article-inner">
     
@@ -872,92 +973,6 @@
 
 
   
-    <article id="post-libevnt源码分析1" class="article article-type-post  article-index" itemscope itemprop="blogPost">
-  <div class="article-inner">
-    
-      <header class="article-header">
-        
-  
-    <h1 itemprop="name">
-      <a class="article-title" href="/2018/09/11/libevnt源码分析1/">libevent源码分析(1)</a>
-    </h1>
-  
-
-        
-        <a href="/2018/09/11/libevnt源码分析1/" class="archive-article-date">
-  	<time datetime="2018-09-11T11:00:00.000Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2018-09-11</time>
-</a>
-        
-      </header>
-    
-    <div class="article-entry" itemprop="articleBody">
-      
-        <p>写在前面：</p>
-<p>​    这个源码是分析libevent-2.0.20-stable, 并非最新版本的libevent，作者并没有全看源码，在这里会推荐以下参考的一些网站，也欢迎大家在不足的地方提出来进行讨论。</p>
-<p>​    <a href="https://blog.csdn.net/luotuo44/article/list/3" target="_blank" rel="noopener">libevent源码分析</a></p>
-<p>​    <a href="https://blog.csdn.net/jcjx0315/article/details/79693484" target="_blank" rel="noopener">libevent深度剖析１</a></p>
-<p>​    <a href="https://blog.csdn.net/sparkliang/article/details/4957667" target="_blank" rel="noopener">libevent深度剖析２</a></p>
-<p>在event2/event.h中定义了错误类型和错误的回调函数</p>
-<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="meta-keyword">define</span> EVENT_LOG_DEBUG 0</span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">define</span> EVENT_LOG_MSG   1</span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">define</span> EVENT_LOG_WARN  2</span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">define</span> EVENT_LOG_ERR   3</span></span><br><span class="line"></span><br><span class="line"><span class="meta">#<span class="meta-keyword">define</span> _EVENT_LOG_DEBUG EVENT_LOG_DEBUG</span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">define</span> _EVENT_LOG_MSG EVENT_LOG_MSG</span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">define</span> _EVENT_LOG_WARN EVENT_LOG_WARN</span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">define</span> _EVENT_LOG_ERR EVENT_LOG_ERR</span></span><br><span class="line"></span><br><span class="line"><span class="comment">// 日志回调函数的格式和日志定制函数</span></span><br><span class="line"><span class="function"><span class="keyword">typedef</span> <span class="title">void</span> <span class="params">(*event_log_cb)</span><span class="params">(<span class="keyword">int</span> severity, <span class="keyword">const</span> <span class="keyword">char</span> *msg)</span></span>;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">void</span> <span class="title">event_set_log_callback</span><span class="params">(event_log_cb cb)</span></span>;　</span><br><span class="line"></span><br><span class="line"><span class="comment">// 出错回调函数的格式和错误定制函数</span></span><br><span class="line"><span class="function"><span class="keyword">typedef</span> <span class="title">void</span> <span class="params">(*event_fatal_cb)</span><span class="params">(<span class="keyword">int</span> err)</span></span>;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">void</span> <span class="title">event_set_fatal_callback</span><span class="params">(event_fatal_cb cb)</span></span>;</span><br></pre></td></tr></table></figure>
-<p>在实现上，在log.c中，定义了两个全局的静态变量和设置两个静态变量的回调函数</p>
-<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">static</span> event_fatal_cb fatal_fn = <span class="literal">NULL</span>;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">void</span>　<span class="title">event_set_fatal_callback</span><span class="params">(event_fatal_cb cb)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">	fatal_fn = cb;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">static</span> event_log_cb log_fn = <span class="literal">NULL</span>;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">void</span>　<span class="title">event_set_log_callback</span><span class="params">(event_log_cb cb)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">	log_fn = cb;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<pre><code>从event_set_log_callback的实现代码可以看到，并没有对这个参数cb做任何检查。
-</code></pre>
-        
-          <a class="article-more-a" href="/2018/09/11/libevnt源码分析1/#more">more >></a>
-        
-      
-
-      
-    </div>
-    <div class="article-info article-info-index">
-      
-      
-	<div class="article-tag tagcloud">
-		<i class="icon-price-tags icon"></i>
-		<ul class="article-tag-list">
-			 
-        		<li class="article-tag-list-item">
-        			<a href="javascript:void(0)" class="js-tag article-tag-list-link color4">libevent</a>
-        		</li>
-      		
-		</ul>
-	</div>
-
-      
-
-      
-        <p class="article-more-link">
-          <a class="article-more-a" href="/2018/09/11/libevnt源码分析1/">展开全文 >></a>
-        </p>
-      
-
-      
-      <div class="clearfix"></div>
-    </div>
-  </div>
-</article>
-
-<aside class="wrap-side-operation">
-    <div class="mod-side-operation">
-        
-        <div class="jump-container" id="js-jump-container" style="display:none;">
-            <a href="javascript:void(0)" class="mod-side-operation__jump-to-top">
-                <i class="icon-font icon-back"></i>
-            </a>
-            <div id="js-jump-plan-container" class="jump-plan-container" style="top: -11px;">
-                <i class="icon-font icon-plane jump-plane"></i>
-            </div>
-        </div>
-        
-        
-    </div>
-</aside>
-
-
-
-
-  
   
     <nav id="page-nav">
       <span class="page-number current">1</span><a class="page-number" href="/page/2/">2</a><a class="page-number" href="/page/3/">3</a><a class="extend next" rel="next" href="/page/2/">Next &raquo;</a>
@@ -1076,6 +1091,10 @@ return o(i(t),arguments.length<2?void 0:u(arguments[1]))}})},function(t,n,r){var
              
               <li class="article-tag-list-item">
                 <a href="javascript:void(0)" class="js-tag color1">服务端编程</a>
+              </li>
+             
+              <li class="article-tag-list-item">
+                <a href="javascript:void(0)" class="js-tag color4">compress</a>
               </li>
             
             <div class="clearfix"></div>
